@@ -5,6 +5,9 @@ import sys
 
 # import keepsake
 
+import keepsake
+import torch
+
 sys.path.append("./")
 
 from padim import PaDiM, PaDiMShared, PaDiMSVDD
@@ -32,6 +35,9 @@ def parse_args():
     parser.add_argument("--compare_all",
                         action="store_true",
                         help="For original PaDiM only")
+    parser.add_argument("--size",
+                        default="416x416",
+                        help="image size [default=416x416]")
 
     # Params for PaDeep
     parser.add_argument("--oe_folder")
@@ -75,7 +81,8 @@ def main():
             Model = PaDiMShared
         else:
             Model = PaDiM
-        model = Model.from_residuals(*params, device="cuda")
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = Model.from_residuals(*params, device=device)
     else:
         if cfg.deep:
             model = train_padeep(cfg)
