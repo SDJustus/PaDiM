@@ -20,8 +20,9 @@ class PaDiMShared(PaDiMBase):
         device: Union[str, Device] = "cpu",
         backbone: str = "resnet18",
         size: Union[None, Tuple[int, int]] = None,
+        cfg = None
     ):
-        super(PaDiMShared, self).__init__(num_embeddings, device, backbone, size)
+        super(PaDiMShared, self).__init__(num_embeddings, device, backbone, size, cfg)
         self.N = 0
         self.mean = torch.zeros((self.num_embeddings, ), device=self.device)
         self.cov = torch.zeros((self.num_embeddings, self.num_embeddings),

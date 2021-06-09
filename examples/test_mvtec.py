@@ -1,11 +1,12 @@
+import torch
 from tqdm import tqdm
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader
-from sklearn.metrics import roc_auc_score
 
 from padim.datasets import LimitedDataset
-from padim.utils import propose_regions_cv2 as propose_regions, floating_IoU
+from padim.utils import propose_regions_cv2 as propose_regions, floating_IoU, get_performance
+
 
 
 def test(cfg, padim):
@@ -20,8 +21,8 @@ def test(cfg, padim):
     img_transforms = transforms.Compose([
         transforms.ToTensor(),
         transforms.Resize(size),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225]),
+        transforms.Normalize( mean=[0.4209137, 0.42091936, 0.42130423],
+                            std=[0.34266332, 0.34264612, 0.3432589]),
     ])
 
     test_dataset = ImageFolder(root=TEST_FOLDER,
@@ -38,9 +39,19 @@ def test(cfg, padim):
     means, covs, _ = padim.get_params()
     inv_cvars = padim._get_inv_cvars(covs)
 
-    pbar = tqdm(test_dataloader)
-    for img, y_true in pbar:
+    pbar = tqdm(enumerate(test_dataloader))
+    for i, test_data in pbar:
+        img, y_true = test_data
         res = padim.predict(img, params=(means, inv_cvars), **predict_args)
+        if cfg.display:
+            amap_transform = transforms.Compose([
+                transforms.Resize(size),
+                transforms.GaussianBlur(5)
+            ])
+            amap = res.reshape(1, 1, int(size[0]/4), int(size[1]/4))
+            amap = amap_transform(amap)
+            
+            padim.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap.cpu(), train_or_test="test", global_step=i)
         preds = [res.max().item()]
 
         y_trues.extend(y_true.numpy())
@@ -48,9 +59,10 @@ def test(cfg, padim):
 
     # from 1 normal to 1 anomalous
     y_trues = list(map(lambda x: 1.0 - x, y_trues))
-    roc_score = roc_auc_score(y_trues, y_preds)
-    print(f"roc_auc_score: {roc_score}")
+    performance = get_performance(y_trues, y_preds)
+    print(performance)
+    padim.visualizer.plot_performance(1, performance=performance)
 
-    return {
-        "roc_auc_score": roc_score,
-    }
+    return performance
+
+

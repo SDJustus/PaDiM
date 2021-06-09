@@ -5,16 +5,18 @@ from torch import Tensor, device as Device
 
 from padim.utils import embeddings_concat
 from padim.backbones import ResNet18, WideResNet50
-
+from padim.utils.visualizer import Visualizer
 
 class PaDiMBase:
     """The embedding backbone shared by PaDiM and PaDiMSVDD
     """
 
     def __init__(self, num_embeddings: int, device: Union[str, Device],
-                 backbone: str, size=None):
+                 backbone: str, size=None, cfg=None):
         self.device = device
         self.num_embeddings = num_embeddings
+        self.visualizer = Visualizer(cfg)
+        self.size = size
 
         if size is not None:
             self._init_backbone_with_size(backbone, size)

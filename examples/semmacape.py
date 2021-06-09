@@ -49,13 +49,13 @@ def train(cfg):
         Model = PaDiM
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    padim = Model(device=device, backbone="wide_resnet50", size=size)
+    padim = Model(device=device, backbone="wide_resnet50", size=size, cfg=cfg)
     img_transforms = transforms.Compose([
         transforms.ToTensor(),
         transforms.Resize(size),
         transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]
+            mean=[0.4209137, 0.42091936, 0.42130423],
+            std=[0.34266332, 0.34264612, 0.3432589]
         ),
     ])
     if "semmacape" in cfg.train_folder:
@@ -69,7 +69,7 @@ def train(cfg):
     #n_cpus = int(os.getenv("SLURM_CPUS_PER_TASK", 12))
     dataloader = DataLoader(
         batch_size=32,
-        num_workers=8,
+        num_workers=os.cpu_count(),
         dataset=LimitedDataset(limit=LIMIT, dataset=training_dataset),
     )
 

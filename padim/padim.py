@@ -2,6 +2,7 @@ from typing import Tuple, Union, List
 
 import numpy as np
 from numpy import ndarray as NDArray
+from torchvision import transforms
 
 import torch
 from torch import Tensor, device as Device
@@ -22,8 +23,9 @@ class PaDiM(PaDiMBase):
         device: Union[str, Device] = "cpu",
         backbone: str = "resnet18",
         size: Union[None, Tuple[int, int]] = None,
+        cfg: dict = None
     ):
-        super(PaDiM, self).__init__(num_embeddings, device, backbone, size)
+        super(PaDiM, self).__init__(num_embeddings, device, backbone, size, cfg)
         self.N = 0
         self.means = torch.zeros(
             (self.num_patches, self.num_embeddings)).to(self.device)
@@ -67,6 +69,7 @@ class PaDiM(PaDiMBase):
             self.train_one_batch(imgs)
 
         means, covs, embedding_ids = self.get_params()
+        
         return means, covs, embedding_ids
 
     def get_params(self,
@@ -172,11 +175,15 @@ class PaDiM(PaDiMBase):
     @staticmethod
     def from_residuals(N: int, means: NDArray, covs: NDArray,
                        embedding_ids: NDArray, backbone: str,
-                       device: Union[Device, str]):
+                       device: Union[Device, str], cfg: dict):
         num_embeddings, = embedding_ids.shape
+        size=None
+        if cfg.size:
+            size = tuple(map(int, cfg.size.split("x")))
         padim = PaDiM(num_embeddings=num_embeddings,
                       device=device,
-                      backbone=backbone)
+                      backbone=backbone,
+                      cfg=cfg, size=size)
         padim.embedding_ids = torch.tensor(embedding_ids).to(device)
         padim.N = N
         padim.means = torch.tensor(means).to(device)

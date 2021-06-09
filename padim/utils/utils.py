@@ -4,6 +4,7 @@ Utils module
 The code from this file comes from:
     * https://github.com/taikiinoue45/PaDiM
 """
+from collections import OrderedDict
 from typing import List
 
 import matplotlib.pyplot as plt
@@ -13,6 +14,7 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 from numpy import ndarray as NDArray
 from skimage import measure
 from sklearn.metrics import auc, roc_auc_score, roc_curve
+from sklearn.metrics.classification import confusion_matrix, precision_recall_fscore_support
 from tqdm import tqdm
 
 import torch
@@ -96,6 +98,29 @@ def compute_pro_score(amaps: NDArray, masks: NDArray) -> float:
 
     df.to_csv("pro_curve.csv", index=False)
     return auc(df["fpr"], df["pro"])
+
+def get_performance(y_trues, y_preds):
+    fpr, tpr, t = roc_curve(y_trues, y_preds)
+    roc_score = auc(fpr, tpr)
+    
+    #Threshold
+    i = np.arange(len(tpr))
+    roc = pd.DataFrame({'tf': pd.Series(tpr - (1 - fpr), index=i), 'threshold': pd.Series(t, index=i)})
+    roc_t = roc.iloc[(roc.tf - 0).abs().argsort()[:1]]
+    threshold = roc_t['threshold']
+    threshold = list(threshold)[0]
+    
+    y_preds = [1 if ele >= threshold else 0 for ele in y_preds] 
+    
+    
+    precision, recall, f1_score, _ = precision_recall_fscore_support(y_trues, y_preds, average="binary", pos_label=0)
+    #### conf_matrix = [["true_normal", "false_abnormal"], ["false_normal", "true_abnormal"]]     
+    conf_matrix = confusion_matrix(y_trues, y_preds)
+    performance = OrderedDict([ ('AUC', roc_score), ('precision', precision),
+                                ("recall", recall), ("F1_Score", f1_score), ("conf_matrix", conf_matrix),
+                                ("threshold", threshold)])
+                                
+    return performance
 
 
 def draw_roc_and_pro_curve(roc_score: float, pro_score: float) -> None:
@@ -217,8 +242,7 @@ def savegif(imgs: NDArray, amaps: NDArray, masks: NDArray, stems: List[str]) -> 
 
 
 def denormalize(img: NDArray) -> NDArray:
-
-    mean = np.array([0.485, 0.456, 0.406])
-    std = np.array([0.229, 0.224, 0.225])
+    mean = np.array([0.4209137, 0.42091936, 0.42130423])
+    std = np.array([0.34266332, 0.34264612, 0.3432589])
     img = (img * std + mean) * 255.0
     return img.astype(np.uint8)

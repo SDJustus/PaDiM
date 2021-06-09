@@ -4,8 +4,6 @@ import pickle
 import sys
 
 # import keepsake
-
-import keepsake
 import torch
 
 sys.path.append("./")
@@ -23,7 +21,9 @@ def parse_args():
     parser.add_argument("--train_folder", required=True, type=str)
     parser.add_argument("--test_folder", required=True, type=str)
     parser.add_argument("--params_path", required=True, type=str)
+    parser.add_argument("--name", required=True, type=str, help="Name for the train run")
     parser.add_argument("--train_limit", type=int, default=-1)
+    parser.add_argument("--display", action="store_true")
 
     # Testing params
     parser.add_argument("--test_limit", type=int, default=-1)
@@ -66,10 +66,6 @@ def main():
         method = "padim"
     params_dict["method"] = method
 
-    #print("Starting experiment")
-    #experiment = keepsake.init(
-    #    params=params_dict,
-    #)
     print("Experiment started")
 
     if os.path.exists(cfg.params_path):
@@ -82,7 +78,7 @@ def main():
         else:
             Model = PaDiM
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        model = Model.from_residuals(*params, device=device)
+        model = Model.from_residuals(*params, device=device, cfg=cfg)
     else:
         if cfg.deep:
             model = train_padeep(cfg)

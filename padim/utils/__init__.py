@@ -2,7 +2,9 @@ from .utils import (
     embeddings_concat,
     mean_smoothing,
     compute_roc_score,
-    compute_pro_score
+    compute_pro_score,
+    get_performance,
+    denormalize
 )
 from .regions import (
     propose_region,
@@ -11,6 +13,7 @@ from .regions import (
     IoU,
     floating_IoU,
 )
+from .visualizer import Visualizer
 
 __all__ = [
     "embeddings_concat",
@@ -22,4 +25,7 @@ __all__ = [
     "propose_regions_cv2",
     "IoU",
     "floating_IoU",
+    "Visualizer",
+    "get_performance",
+    "denormalize"
 ]

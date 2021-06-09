@@ -29,13 +29,13 @@ class PaDiMSVDD(PaDiMBase):
         device: Union[str, Device] = "cpu",
         backbone: str = "resnet18",
         size: Union[None, Tuple[int, int]] = None,
+        cfg: dict=None,
         **kwargs,
     ):
-        super(PaDiMSVDD, self).__init__(num_embeddings, device, backbone, size)
+        super(PaDiMSVDD, self).__init__(num_embeddings, device, backbone, size, cfg)
         self._init_params(**kwargs)
 
         self.use_self_supervision = False
-
         self.net_name = "MLPNet"
         self.net = MultiDeepSVDD(n_svdds=self.n_svdds,
                                  input_size=self.num_embeddings,
@@ -210,6 +210,7 @@ class PaDiMSVDD(PaDiMBase):
                     loss = self.R**2 + (1 / self.nu) * torch.mean(
                         torch.max(torch.zeros_like(scores), scores))
                 else:
+                    outlier_exposure=False
                     if outlier_exposure:
                         mask = torch.zeros((imgs.size(0), 104 * 104),
                                            dtype=torch.bool,
@@ -304,7 +305,7 @@ class PaDiMSVDD(PaDiMBase):
             scores = dists
 
         # Return anomaly maps
-        return scores.reshape((-1, 1, 104, 104))
+        return scores.reshape((-1, 1, int(self.size[0]/4), int(self.size[1]/4)))
 
     def get_params(self):
         """
@@ -340,6 +341,7 @@ class PaDiMSVDD(PaDiMBase):
                        R,
                        embedding_ids,
                        backbone,
+                       cfg:dict=None,
                        backbone_dict=None,
                        device="cuda"):
         num_embeddings, = embedding_ids.shape
@@ -348,11 +350,17 @@ class PaDiMSVDD(PaDiMBase):
             if key.startswith("svdds."):
                 n_svdds = max(n_svdds, int(key[6:].split(".")[0]))
         n_svdds += 1
-        padim = PaDiMSVDD(num_embeddings=num_embeddings,
+        size=None
+        if cfg.size:
+            size = tuple(map(int, cfg.size.split("x")))
+        padim = PaDiMSVDD(cfg=cfg,
+                          num_embeddings=num_embeddings,
                           backbone=backbone,
                           device=device,
+                          size=size,
                           n_svdds=n_svdds,
-                          R=R)
+                          R=R
+                          )
         padim.net.load_state_dict(net_dict)
         padim.net = padim.net.to(device)
         padim.embedding_ids = torch.tensor(embedding_ids, device=device)
