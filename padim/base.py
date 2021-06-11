@@ -4,7 +4,7 @@ import torch
 from torch import Tensor, device as Device
 
 from padim.utils import embeddings_concat
-from padim.backbones import ResNet18,ResNet50, WideResNet50
+from padim.backbones import ResNet18,ResNet50, WideResNet50, EfficientNetB5
 from padim.utils.visualizer import Visualizer
 
 
@@ -30,12 +30,14 @@ class PaDiMBase:
     def _get_backbone(self):
         if isinstance(self.model, ResNet18):
             backbone = "resnet18"
-        if isinstance(self.model, ResNet50):
+        elif isinstance(self.model, ResNet50):
             backbone = "resnet50"
         elif isinstance(self.model, WideResNet50):
             backbone = "wide_resnet50"
+        elif isinstance(self.model, EfficientNetB5):
+            backbone = "efficientnetb5"
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(str(self.model) + " " + str(ResNet18) + " " + str(isinstance(self.model, ResNet18)))
 
         return backbone
 
@@ -54,9 +56,11 @@ class PaDiMBase:
             self.model = ResNet50().to(self.device)
         elif backbone == "wide_resnet50":
             self.model = WideResNet50().to(self.device)
+        elif backbone == "efficientnetb5":
+            self.model = EfficientNetB5().to(self.device)
         else:
             raise Exception(f"unknown backbone {backbone}, "
-                            "choose one of ['resnet18', 'resnet50', 'wide_resnet50']")
+                            "choose one of ['resnet18', 'resnet50', 'wide_resnet50', 'efficientnetb5]")
 
         self.num_patches = self.model.num_patches
         self.max_embeddings_size = self.model.embeddings_size
