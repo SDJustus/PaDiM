@@ -28,9 +28,10 @@ class EfficientNetB5(Module):
         x = self.efficientnetb5._conv_stem(x)
         x = self.efficientnetb5._bn0(x)
 
-
-        feature_1 = self.efficientnetb5._blocks[0](x)
-        feature_2 = self.efficientnetb5._blocks[1](feature_1)
-        feature_3 = self.efficientnetb5._blocks[2](feature_2)
+        feature_not_using_1 = self.efficientnetb5._blocks[0](x)
+        feature_1 = self.efficientnetb5._blocks[1](feature_not_using_1)
+        feature_not_using_2 = self.efficientnetb5._blocks[2](feature_1)
+        feature_2 = self.efficientnetb5._blocks[3](feature_not_using_2)
+        feature_3 = self.efficientnetb5._blocks[4](feature_2)
 
         return feature_1, feature_2, feature_3
