@@ -6,7 +6,7 @@ from efficientnet_pytorch import EfficientNet
 
 
 class EfficientNetB5(Module):
-    embeddings_size = 448
+    embeddings_size = 104
     num_patches = 32 * 32
 
     def __init__(self) -> None:
@@ -27,7 +27,7 @@ class EfficientNetB5(Module):
         """
         x = self.efficientnetb5._conv_stem(x)
         x = self.efficientnetb5._bn0(x)
-
+        blocks_to_use = []
         feature_not_using_1 = self.efficientnetb5._blocks[0](x)
         feature_1 = self.efficientnetb5._blocks[1](feature_not_using_1)
         feature_not_using_2 = self.efficientnetb5._blocks[2](feature_1)

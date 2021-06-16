@@ -48,7 +48,13 @@ def test(cfg, padim):
                 transforms.Resize(size),
                 transforms.GaussianBlur(5)
             ])
-            amap = res.reshape(1, 1, int(size[0]/4), int(size[1]/4))
+            if "efficient" in cfg.backbone:
+                w = int(size[0]/2)
+                h = int(size[1]/2)
+            else:
+                w = int(size[0]/4)
+                h = int(size[1]/4)
+            amap = res.reshape(1, 1, w, h)
             amap = amap_transform(amap)
             
             padim.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap.cpu(), train_or_test="test", global_step=i)

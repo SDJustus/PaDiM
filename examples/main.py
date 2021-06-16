@@ -24,6 +24,7 @@ def parse_args():
     parser.add_argument("--name", required=True, type=str, help="Name for the train run")
     parser.add_argument("--train_limit", type=int, default=-1)
     parser.add_argument("--display", action="store_true")
+    parser.add_argument("--num_embeddings", default=100, type=int, help="number of randomly selected embeddings (100 for r18 and 550 for WR50")
 
     # Testing params
     parser.add_argument("--test_limit", type=int, default=-1)

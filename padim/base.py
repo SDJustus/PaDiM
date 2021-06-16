@@ -18,6 +18,7 @@ class PaDiMBase:
         self.num_embeddings = num_embeddings
         self.visualizer = Visualizer(cfg)
         self.size = size
+        print(size)
 
         if size is not None:
             self._init_backbone_with_size(backbone, size)
@@ -48,6 +49,7 @@ class PaDiMBase:
         _, _, w, h = feature_1.shape
         self.num_patches = w * h
         self.model.num_patches = w * h
+        
 
     def _init_backbone(self, backbone: str) -> None:
         if backbone == "resnet18":
@@ -64,6 +66,7 @@ class PaDiMBase:
 
         self.num_patches = self.model.num_patches
         self.max_embeddings_size = self.model.embeddings_size
+        
 
     def _embed_batch(self, imgs: Tensor, with_grad: bool = False) -> Tensor:
         with torch.set_grad_enabled(with_grad):
