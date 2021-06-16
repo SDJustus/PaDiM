@@ -141,4 +141,4 @@ dmypy.json
 # profiling data
 .prof
 
-.results/
+results/
