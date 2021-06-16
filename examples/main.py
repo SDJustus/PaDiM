@@ -38,7 +38,7 @@ def parse_args():
     parser.add_argument("--size",
                         default="416x416",
                         help="image size [default=416x416]")
-    parser.add_argument("--backbone", default="wide_resnet50", help="[wide_resnet50, resnet50, resnet18]")
+    parser.add_argument("--backbone", default="wide_resnet50", help="[wide_resnet50, resnet50, resnet18, efficientnetb5]")
 
     # Params for PaDeep
     parser.add_argument("--oe_folder")
