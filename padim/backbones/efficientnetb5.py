@@ -1,4 +1,5 @@
 from typing import Tuple
+from numpy.core.shape_base import block
 
 from torch import Tensor
 from torch.nn import Module
@@ -6,7 +7,7 @@ from efficientnet_pytorch import EfficientNet
 
 
 class EfficientNetB5(Module):
-    embeddings_size = 104
+    embeddings_size = 344
     num_patches = 32 * 32
 
     def __init__(self) -> None:
@@ -27,11 +28,14 @@ class EfficientNetB5(Module):
         """
         x = self.efficientnetb5._conv_stem(x)
         x = self.efficientnetb5._bn0(x)
-        blocks_to_use = []
-        feature_not_using_1 = self.efficientnetb5._blocks[0](x)
-        feature_1 = self.efficientnetb5._blocks[1](feature_not_using_1)
-        feature_not_using_2 = self.efficientnetb5._blocks[2](feature_1)
-        feature_2 = self.efficientnetb5._blocks[3](feature_not_using_2)
-        feature_3 = self.efficientnetb5._blocks[4](feature_2)
-
-        return feature_1, feature_2, feature_3
+        blocks_to_use = [6, 19, 26]
+        features =[]
+        for i in range(len(self.efficientnetb5._blocks)):
+            x = self.efficientnetb5._blocks[i](x)
+            if i in blocks_to_use:
+                features.append(x)
+                blocks_to_use.pop(0)
+            if not blocks_to_use: 
+                break
+        assert len(features) == 3
+        return features
