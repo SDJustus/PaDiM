@@ -81,7 +81,7 @@ def train(cfg):
     print(">> Saving params")
     params = padim.get_residuals()
     with open(PARAMS_PATH, 'wb') as f:
-        pickle.dump(params, f)
+        pickle.dump(params, f, protocol=4)
     print(f">> Params saved at {PARAMS_PATH}")
 
     return padim
