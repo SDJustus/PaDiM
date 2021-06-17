@@ -48,12 +48,12 @@ def test(cfg, padim):
                 transforms.Resize(size),
                 transforms.GaussianBlur(5)
             ])
-            if "efficient" in cfg.backbone:
-                w = int(size[0]/2)
-                h = int(size[1]/2)
-            else:
-                w = int(size[0]/4)
-                h = int(size[1]/4)
+            #if "efficient" in cfg.backbone:
+            #    w = int(size[0]/2)
+            #    h = int(size[1]/2)
+            #else:
+            w = int(size[0]/4)
+            h = int(size[1]/4)
             amap = res.reshape(1, 1, w, h)
             amap = amap_transform(amap)
             
