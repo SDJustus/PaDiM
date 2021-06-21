@@ -12,7 +12,7 @@ class Visualizer():
     """
     def __init__(self, cfg):        
         self.cfg = cfg
-        from torch.utils.tensorboard import SummaryWriter
+        from tensorboardX import SummaryWriter
         self.writer = SummaryWriter(log_dir=os.path.join("../tensorboard/PaDiM/", self.cfg.name))
 
     def plot_current_errors(self, total_steps, errors):

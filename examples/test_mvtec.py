@@ -5,7 +5,7 @@ from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader
 
 from padim.datasets import LimitedDataset
-from padim.utils import propose_regions_cv2 as propose_regions, floating_IoU, get_performance
+from padim.utils import propose_regions_cv2 as propose_regions, floating_IoU, get_performance, get_values_for_pr_curve
 
 
 
@@ -58,6 +58,7 @@ def test(cfg, padim):
             amap = amap_transform(amap)
             
             padim.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap.cpu(), train_or_test="test", global_step=i)
+            
         preds = [res.max().item()]
 
         y_trues.extend(y_true.numpy())
@@ -65,8 +66,19 @@ def test(cfg, padim):
 
     # from 1 normal to 1 anomalous
     y_trues = list(map(lambda x: 1.0 - x, y_trues))
-    performance = get_performance(y_trues, y_preds)
+    performance, t = get_performance(y_trues, y_preds)
+    print(t)
+    tpc, fpc, tnc, fnc, precisions, recalls, n_thresholds = get_values_for_pr_curve(y_trues=y_trues, y_preds=y_preds, thresholds=t)
+    print(tpc)
+    print(fpc)
+    print(tnc)
+    print(fnc)
+    print(precisions)
+    print(recalls)
+    print(n_thresholds)
     print(performance)
+    padim.visualizer.writer.add_pr_curve_raw("Precision_recall_curve", true_positive_counts=tpc, false_positive_counts=fpc, true_negative_counts=tnc, false_negative_counts=fnc,
+                                             precision=precisions, recall=recalls, num_thresholds=n_thresholds, global_step=1)
     padim.visualizer.plot_performance(1, performance=performance)
 
     return performance

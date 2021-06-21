@@ -4,7 +4,8 @@ from .utils import (
     compute_roc_score,
     compute_pro_score,
     get_performance,
-    denormalize
+    denormalize,
+    get_values_for_pr_curve
 )
 from .regions import (
     propose_region,
@@ -27,5 +28,6 @@ __all__ = [
     "floating_IoU",
     "Visualizer",
     "get_performance",
-    "denormalize"
+    "denormalize",
+    "get_values_for_pr_curve"
 ]
