@@ -128,7 +128,7 @@ class Visualizer():
             train_or_test (["train", "test]): Determines, which phase the model is in
             images ([FloatTensor]): [Real Image, Anomaly Map, Mask (Optional)]
         """
-        self.writer.add_images("images from {} step: ".format(str(train_or_test)), images, global_step=global_step)
+        self.writer.add_images("images_from_{}_step".format(str(train_or_test)), images, global_step=global_step)
 
     def plot_current_anomaly_map(self, image, amap, train_or_test="train", global_step=0):
         """ Display current images.
@@ -143,4 +143,4 @@ class Visualizer():
         axis.imshow(denormalize(image.squeeze().permute(1, 2, 0).numpy()))
         axis.imshow(amap.squeeze(), alpha=.7)
         
-        self.writer.add_figure("images from {} step: ".format(str(train_or_test)), fig, global_step=global_step)
+        self.writer.add_figure("images_from_{}_step".format(str(train_or_test)), fig, global_step=global_step)
