@@ -136,7 +136,7 @@ def get_values_for_pr_curve(y_trues, y_preds, thresholds):
             print("y_preds_new did only contain the element {}... Continuing with next iteration!".format(y_preds_new[0]))
             continue
         
-        precision, recall, _, _ = precision_recall_fscore_support(y_trues, y_preds_new, average="binary", pos_label=0)
+        precision, recall, _, _ = precision_recall_fscore_support(y_trues, y_preds_new, average="binary", pos_label=1)
         precisions.append(precision)
         recalls.append(recall)
         tn_counts.append(tn)
