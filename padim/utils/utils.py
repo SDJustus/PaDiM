@@ -20,19 +20,27 @@ from tqdm import tqdm
 import torch
 from torch import Tensor
 import torch.nn.functional as F
+import os
+import json
 
 
 def embeddings_concat(x0: Tensor, x1: Tensor) -> Tensor:
     b0, c0, h0, w0 = x0.size()
     _, c1, h1, w1 = x1.size()
     s = h0 // h1
+    #print("shape before unfold", str(x0.shape))
     x0 = F.unfold(x0, kernel_size=(s, s), dilation=(1, 1), stride=(s, s))
+    #print("shape after unfold", str(x0.shape))
     x0 = x0.view(b0, c0, -1, h1, w1)
+    #print("shape after unfold_view", str(x0.shape))
     z = torch.zeros(b0, c0 + c1, x0.size(2), h1, w1).to(x0.device)
     for i in range(x0.size(2)):
         z[:, :, i, :, :] = torch.cat((x0[:, :, i, :, :], x1), 1)
+    #print("shape before view", str(z.shape))
     z = z.view(b0, -1, h1 * w1)
+    #print("shape after view", str(z.shape))
     z = F.fold(z, kernel_size=(s, s), output_size=(h0, w0), stride=(s, s))
+    #print("shape after fold", str(z.shape))
     return z
 
 
@@ -272,3 +280,19 @@ def denormalize(img: NDArray) -> NDArray:
     std = np.array([0.34266332, 0.34264612, 0.3432589])
     img = (img * std + mean) * 255.0
     return img.astype(np.uint8)
+
+def write_inference_result(file_names, y_preds, y_trues, outf):
+        classification_result = {"tp": [], "fp": [], "tn": [], "fn": []}
+        for file_name, gt, anomaly_score in zip(file_names, y_trues, y_preds):
+            anomaly_score=int(anomaly_score)
+            if gt == anomaly_score == 0:
+                classification_result["tp"].append(file_name)
+            if anomaly_score == 0 and gt != anomaly_score:
+                classification_result["fp"].append(file_name)
+            if gt == anomaly_score == 1:
+                classification_result["tn"].append(file_name)
+            if anomaly_score == 1 and gt != anomaly_score:
+                classification_result["fn"].append(file_name)
+                    
+        with open(outf, "w") as file:
+            json.dump(classification_result, file, indent=4)

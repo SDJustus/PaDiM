@@ -13,15 +13,15 @@ class PaDiMBase:
     """
 
     def __init__(self, num_embeddings: int, device: Union[str, Device],
-                 backbone: str, size=None, cfg=None):
+                 backbone: str, cfg=None):
         self.device = device
         self.num_embeddings = num_embeddings
         self.visualizer = Visualizer(cfg)
-        self.size = size
-        print(size)
+        self.size = cfg.size
+        print(self.size)
 
-        if size is not None:
-            self._init_backbone_with_size(backbone, size)
+        if self.size is not None:
+            self._init_backbone_with_size(backbone, self.size)
         else:
             self._init_backbone(backbone)
 
@@ -69,6 +69,7 @@ class PaDiMBase:
         
 
     def _embed_batch(self, imgs: Tensor, with_grad: bool = False) -> Tensor:
+        self.model.eval()
         with torch.set_grad_enabled(with_grad):
             feature_1, feature_2, feature_3 = self.model(imgs.to(self.device))
         embeddings = embeddings_concat(feature_1, feature_2)

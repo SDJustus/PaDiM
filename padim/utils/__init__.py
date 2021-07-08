@@ -5,7 +5,8 @@ from .utils import (
     compute_pro_score,
     get_performance,
     denormalize,
-    get_values_for_pr_curve
+    get_values_for_pr_curve,
+    write_inference_result
 )
 from .regions import (
     propose_region,
@@ -29,5 +30,6 @@ __all__ = [
     "Visualizer",
     "get_performance",
     "denormalize",
-    "get_values_for_pr_curve"
+    "get_values_for_pr_curve",
+    "write_inference_result"
 ]

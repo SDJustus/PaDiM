@@ -1,13 +1,7 @@
-from .semmacape import (
-    SemmacapeDataset,
-    SemmacapeTestDataset,
-    LimitedDataset,
-    OutlierExposureDataset
+from .dataset import (
+    ImageFolderWithPaths
 )
 
 __all__ = [
-    "SemmacapeDataset",
-    "SemmacapeTestDataset",
-    "LimitedDataset",
-    "OutlierExposureDataset"
+    "ImageFolderWithPaths"
 ]

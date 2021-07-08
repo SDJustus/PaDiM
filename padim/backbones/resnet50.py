@@ -31,10 +31,7 @@ class ResNet50(Module):
         x = self.resnet50.maxpool(x)
 
         feature_1 = self.resnet50.layer1(x)
-        print(feature_1.shape)
         feature_2 = self.resnet50.layer2(feature_1)
-        print(feature_2.shape)
         feature_3 = self.resnet50.layer3(feature_2)
-        print(feature_3.shape)
 
         return feature_1, feature_2, feature_3

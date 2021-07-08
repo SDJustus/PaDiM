@@ -22,10 +22,9 @@ class PaDiM(PaDiMBase):
         num_embeddings: int = 100,
         device: Union[str, Device] = "cpu",
         backbone: str = "resnet18",
-        size: Union[None, Tuple[int, int]] = None,
         cfg: dict = None
     ):
-        super(PaDiM, self).__init__(num_embeddings, device, backbone, size, cfg)
+        super(PaDiM, self).__init__(num_embeddings, device, backbone, cfg)
         self.N = 0
         self.means = torch.zeros(
             (self.num_patches, self.num_embeddings)).to(self.device)
@@ -141,6 +140,7 @@ class PaDiM(PaDiMBase):
             inv_cvars = self._get_inv_cvars(covs)
         else:
             means, inv_cvars = params
+        
         embeddings = self._embed_batch(new_imgs)
         b, c, w, h = embeddings.shape
         # not required, but need changing of testing code
@@ -177,13 +177,10 @@ class PaDiM(PaDiMBase):
                        embedding_ids: NDArray, backbone: str,
                        device: Union[Device, str], cfg: dict):
         num_embeddings, = embedding_ids.shape
-        size=None
-        if cfg.size:
-            size = tuple(map(int, cfg.size.split("x")))
         padim = PaDiM(num_embeddings=num_embeddings,
                       device=device,
                       backbone=backbone,
-                      cfg=cfg, size=size)
+                      cfg=cfg)
         padim.embedding_ids = torch.tensor(embedding_ids).to(device)
         padim.N = N
         padim.means = torch.tensor(means).to(device)
