@@ -29,7 +29,7 @@ def parse_args():
                         default="256x256",
                         help="image size [default=256x256]")
     parser.add_argument("--backbone", default="wide_resnet50", help="[wide_resnet50, resnet50, resnet18, efficientnetb5]")
-    parser.add_argument("--inference", default=False, action="store_true", help="if inference Dataset should be used")
+    parser.add_argument("--inference", default=False, action="store_true", help="if inference Dataset should be used (additionally)")
     parser.add_argument("--seed", type=int, help="set seed for reproducability")
     return parser.parse_args()
 
