@@ -1,3 +1,4 @@
+from padim.utils.visualizer import Visualizer
 from torch.utils.data.dataloader import DataLoader
 from padim.datasets.dataset import ImageFolderWithPaths
 import argparse
@@ -31,6 +32,7 @@ def parse_args():
     parser.add_argument("--backbone", default="wide_resnet50", help="[wide_resnet50, resnet50, resnet18, efficientnetb5]")
     parser.add_argument("--inference", default=False, action="store_true", help="if inference Dataset should be used (additionally)")
     parser.add_argument("--seed", type=int, help="set seed for reproducability")
+    parser.add_argument("--batchsize", type=int, default=32, help="batchsize...")
     return parser.parse_args()
 
 def seed(seed_value):
@@ -80,7 +82,8 @@ def main():
     training_dataset = ImageFolderWithPaths(root=os.path.join(cfg.dataroot, "train"), transform=img_transforms)
     test_dataset = ImageFolderWithPaths(root=os.path.join(cfg.dataroot, "test"), transform=img_transforms)
     
-    train_dataloader = DataLoader(batch_size=32, dataset=training_dataset)   
+    
+    train_dataloader = DataLoader(batch_size=cfg.batchsize, dataset=training_dataset)   
     test_dataloader = DataLoader(batch_size=1, dataset=test_dataset)   
 
     if os.path.exists(os.path.join(cfg.params_path, cfg.name)):
@@ -90,9 +93,13 @@ def main():
         model = PaDiM.from_residuals(*params, device=device, cfg=cfg)
     else:
         model = train(cfg, train_dataloader)
-    test(cfg, model, test_dataloader)
+    
     if cfg.inference:
+        cfg.name = cfg.name + "_inference"
+        model.visualizer = Visualizer(cfg)
         test(cfg, model, inference_dataloader)
-
+    else:
+        test(cfg, model, test_dataloader)
+        
 if __name__ == "__main__":
     main()

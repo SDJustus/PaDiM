@@ -53,24 +53,6 @@ class PaDiM(PaDiMBase):
                 self.means[i, :] += patch_embeddings.sum(dim=0)  # c
             self.N += b  # number of images
 
-    def train(self, dataloader: DataLoader) -> Tuple[Tensor, Tensor, Tensor]:
-        """
-        End-to-end training of the model
-        Params
-        ======
-            dataloader: DataLoader - a dataset dataloader feeding images
-        Returns
-        =======
-            means: Tensor - the computed mean vectors
-            covs: Tensor - the computed covariance matrices
-        """
-        for imgs in dataloader:
-            self.train_one_batch(imgs)
-
-        means, covs, embedding_ids = self.get_params()
-        
-        return means, covs, embedding_ids
-
     def get_params(self,
                    epsilon: float = 0.01) -> Tuple[Tensor, Tensor, Tensor]:
         """
@@ -97,25 +79,6 @@ class PaDiM(PaDiMBase):
 
         return means, covs, self.embedding_ids
 
-    def test(self, dataloader: DataLoader) -> List[NDArray]:
-        """
-        Consumes the given dataloader and outputs the corresponding
-        distance matrices
-        Params
-        ======
-            dataloader: DataLoader - a dataloader of image tensors
-        Returns
-        =======
-            distances: ndarray - the (N * (w * h)) distance matrix
-        """
-        distances = []
-        means, covs, _ = self.get_params()
-        means, covs = means.cpu().numpy(), covs.cpu().numpy()
-        inv_cvars = self._get_inv_cvars(covs)
-        for new_imgs in dataloader:
-            new_distances = self.predict(new_imgs, params=(means, inv_cvars))
-            distances.extend(new_distances)
-        return np.array(distances)
 
     def _get_inv_cvars(self, covs: Tensor) -> NDArray:
         inv_cvars = torch.inverse(covs)

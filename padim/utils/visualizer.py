@@ -1,7 +1,9 @@
+import pandas as pd
 from padim.utils import denormalize, get_values_for_pr_curve
 import os
 
 from matplotlib import pyplot as plt
+import seaborn as sns
 
 
 class Visualizer():
@@ -145,7 +147,30 @@ class Visualizer():
         
         self.writer.add_figure("images_from_{}_step".format(str(train_or_test)), fig, global_step=global_step)
         
-    def plot_pr_curve(self, y_trues, y_preds, t):    
-        tpc, fpc, tnc, fnc, precisions, recalls, n_thresholds = get_values_for_pr_curve(y_trues=y_trues, y_preds=y_preds, thresholds=t)
+    def plot_pr_curve(self, y_trues, y_preds, t, global_step=1):    
+        tpc, fpc, tnc, fnc, precisions, recalls, n_thresholds = self.utils.get_values_for_pr_curve(y_trues=y_trues, y_preds=y_preds, thresholds=t)
         self.writer.add_pr_curve_raw("Precision_recall_curve", true_positive_counts=tpc, false_positive_counts=fpc, true_negative_counts=tnc, false_negative_counts=fnc,
-                                                precision=precisions, recall=recalls, num_thresholds=n_thresholds, global_step=1)
+                                                precision=precisions, recall=recalls, num_thresholds=n_thresholds, global_step=global_step)
+        
+    def plot_histogram(self, y_trues, y_preds, threshold, global_step=1, save_path=None, tag=None):
+        scores = dict()
+        scores["scores"] = y_preds
+        scores["labels"] = y_trues
+        hist = pd.DataFrame.from_dict(scores)
+        hist.to_csv(save_path if save_path else "histogram.csv")
+        
+        plt.ion()
+
+            # Filter normal and abnormal scores.
+        abn_scr = hist.loc[hist.labels == 1]['scores']
+        nrm_scr = hist.loc[hist.labels == 0]['scores']
+
+            # Create figure and plot the distribution.
+        fig = plt.figure(figsize=(4,4))
+        sns.distplot(nrm_scr, label=r'Normal Scores')
+        sns.distplot(abn_scr, label=r'Abnormal Scores')
+        plt.axvline(threshold, 0, 1, label='threshold', color="red")
+        plt.legend()
+        plt.yticks([])
+        plt.xlabel(r'Anomaly Scores')
+        self.writer.add_figure(tag if tag else "Histogram", fig, global_step)

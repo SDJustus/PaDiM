@@ -6,7 +6,7 @@ import os
 
 
 def test(cfg, padim, dataloader):
-    size = tuple(map(int, cfg.size.split("x")))
+    size = cfg.size
 
     predict_args = {}
     y_trues = []
@@ -15,13 +15,11 @@ def test(cfg, padim, dataloader):
     means, covs, _ = padim.get_params()
     inv_cvars = padim._get_inv_cvars(covs)
 
-    pbar = tqdm(enumerate(dataloader))
+    pbar = enumerate(tqdm(dataloader))
     file_names = []
     for i, test_data in pbar:
         img, y_true, file_name = test_data
         res = padim.predict(img, params=(means, inv_cvars), **predict_args)
-        print("res", str(res))
-        print(padim.num_patches)
         if cfg.display:
             amap_transform = transforms.Compose([
                 transforms.Resize(size),
@@ -45,14 +43,18 @@ def test(cfg, padim, dataloader):
         file_names.append(file_name)
 
     # from 1 normal to 1 anomalous
-    y_trues = list(map(lambda x: 1.0 - x, y_trues))
-    performance, t = get_performance(y_trues, y_preds)
+    #y_trues = list(map(lambda x: 1.0 - x, y_trues))
+    performance, thresholds, y_preds_after_threshold = get_performance(y_trues, y_preds)
     
-    padim.visualizer.plot_pr_curve(y_trues=y_trues, y_preds=y_preds, t=t)
+    padim.visualizer.plot_histogram(y_trues=y_true, y_preds=y_preds, threshold=performance["threshold"], global_step=1, save_path=cfg.params_path, tag=None)
+    padim.visualizer.plot_pr_curve(y_trues=y_trues, y_preds=y_preds, thresholds=thresholds)
     padim.visualizer.plot_performance(1, performance=performance)
+    padim.visualizer.plot_current_conf_matrix(1, performance["conf_matrix"])
     
     if cfg.inference:
-        write_inference_result(file_names=file_names, y_preds=y_preds, y_trues=y_trues, outf=os.path.join(cfg.params_path, "classification_result_" + str(cfg.name) + ".json"))
+        write_inference_result(file_names=file_names, y_preds=y_preds_after_threshold, y_trues=y_trues, outf=os.path.join(cfg.params_path, "classification_result_" + str(cfg.name) + ".json"))
+    
+    
 
     return performance
 
