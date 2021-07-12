@@ -147,8 +147,8 @@ class Visualizer():
         
         self.writer.add_figure("images_from_{}_step".format(str(train_or_test)), fig, global_step=global_step)
         
-    def plot_pr_curve(self, y_trues, y_preds, t, global_step=1):    
-        tpc, fpc, tnc, fnc, precisions, recalls, n_thresholds = self.utils.get_values_for_pr_curve(y_trues=y_trues, y_preds=y_preds, thresholds=t)
+    def plot_pr_curve(self, y_trues, y_preds, thresholds, global_step=1):    
+        tpc, fpc, tnc, fnc, precisions, recalls, n_thresholds = self.utils.get_values_for_pr_curve(y_trues=y_trues, y_preds=y_preds, thresholds=thresholds)
         self.writer.add_pr_curve_raw("Precision_recall_curve", true_positive_counts=tpc, false_positive_counts=fpc, true_negative_counts=tnc, false_negative_counts=fnc,
                                                 precision=precisions, recall=recalls, num_thresholds=n_thresholds, global_step=global_step)
         

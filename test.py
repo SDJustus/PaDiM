@@ -46,7 +46,7 @@ def test(cfg, padim, dataloader):
     #y_trues = list(map(lambda x: 1.0 - x, y_trues))
     performance, thresholds, y_preds_after_threshold = get_performance(y_trues, y_preds)
     
-    padim.visualizer.plot_histogram(y_trues=y_trues, y_preds=y_preds, threshold=performance["threshold"], global_step=1, save_path=os.path.join(cfg.params_path, str(cfg.name) + ".csv"), tag="Histogram_"+str(cfg.name))
+    padim.visualizer.plot_histogram(y_trues=y_trues, y_preds=y_preds, threshold=performance["threshold"], global_step=1, save_path=os.path.join(cfg.params_path, str(cfg.name) + str(cfg.inference)+".csv"), tag="Histogram_"+str(cfg.name))
     padim.visualizer.plot_pr_curve(y_trues=y_trues, y_preds=y_preds, thresholds=thresholds)
     padim.visualizer.plot_performance(1, performance=performance)
     padim.visualizer.plot_current_conf_matrix(1, performance["conf_matrix"])
