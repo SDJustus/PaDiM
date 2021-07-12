@@ -112,20 +112,26 @@ def get_performance(y_trues, y_preds):
         ap = average_precision_score(y_trues, y_preds, pos_label=1)
         recall_dict = dict()
         precisions = [0.996, 0.99, 0.95, 0.9]
+        temp_dict=dict()
         
-        for p in precisions:
-            for th in t:
-                y_preds_new = [1 if ele >= th else 0 for ele in y_preds] 
-                if len(set(y_preds_new)) == 1:
-                    print("y_preds_new did only contain the element {}... Continuing with next iteration!".format(y_preds_new[0]))
-                    continue
-                
-                precision, recall, _, _ = precision_recall_fscore_support(y_trues, y_preds_new, average="binary", pos_label=1)
+        for th in t:
+            y_preds_new = [1 if ele >= th else 0 for ele in y_preds] 
+            if len(set(y_preds_new)) == 1:
+                print("y_preds_new did only contain the element {}... Continuing with next iteration!".format(y_preds_new[0]))
+                continue
+            
+            precision, recall, _, _ = precision_recall_fscore_support(y_trues, y_preds_new, average="binary", pos_label=1)
+            temp_dict[str(precision)] = recall
+        p_dict = OrderedDict(sorted(temp_dict.items(), reverse=True))
+        for p in precisions:   
+            for precision, recall in p_dict.items(): 
                 if precision<=p:
                     print(f"writing {p}; {precision}")
                     recall_dict["recall at pr="+str(p)+"(real_value="+str(precision)+")"] = recall
                     break
-        
+                else:
+                    continue
+    
         
         #Threshold
         i = np.arange(len(tpr))
