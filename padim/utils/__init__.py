@@ -6,7 +6,8 @@ from .utils import (
     get_performance,
     denormalize,
     get_values_for_pr_curve,
-    write_inference_result
+    write_inference_result,
+    get_values_for_roc_curve
 )
 from .regions import (
     propose_region,
@@ -31,5 +32,6 @@ __all__ = [
     "get_performance",
     "denormalize",
     "get_values_for_pr_curve",
-    "write_inference_result"
+    "write_inference_result",
+    "get_values_for_roc_curve"
 ]
