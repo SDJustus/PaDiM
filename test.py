@@ -12,7 +12,8 @@ def test(cfg, padim, dataloader):
     y_trues = []
     y_preds = []
 
-    means, covs, _ = padim.get_params()
+    means, covs, emb_id = padim.get_params()
+    del emb_id
     inv_cvars = padim._get_inv_cvars(covs)
 
     pbar = enumerate(tqdm(dataloader))
@@ -52,6 +53,7 @@ def test(cfg, padim, dataloader):
     padim.visualizer.plot_pr_curve(y_trues=y_trues, y_preds=y_preds, thresholds=thresholds)
     padim.visualizer.plot_performance(1, performance=performance)
     padim.visualizer.plot_current_conf_matrix(1, performance["conf_matrix"])
+    padim.visualizer.plot_roc_curve(y_trues=y_trues, y_preds=y_preds, global_step=1, tag="ROC_Curve")
     
     if cfg.inference:
         write_inference_result(file_names=file_names, y_preds=y_preds_after_threshold, y_trues=y_trues, outf=os.path.join(cfg.params_path, "classification_result_" + str(cfg.name) + ".json"))

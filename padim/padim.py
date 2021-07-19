@@ -81,7 +81,9 @@ class PaDiM(PaDiMBase):
 
 
     def _get_inv_cvars(self, covs: Tensor) -> NDArray:
+        covs.to("cpu")
         inv_cvars = torch.inverse(covs)
+        inv_cvars.to(self.device)
         return inv_cvars
 
     def predict(self,

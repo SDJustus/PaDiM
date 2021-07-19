@@ -127,7 +127,7 @@ def get_performance(y_trues, y_preds):
             for precision, recall in p_dict.items(): 
                 if float(precision)<=p:
                     print(f"writing {p}; {precision}")
-                    recall_dict["recall at pr="+str(p)+"(real_value="+str(precision)+")"] = recall
+                    recall_dict["recall at pr="+str(p)] = recall
                     break
                 else:
                     continue
@@ -322,3 +322,7 @@ def write_inference_result(file_names, y_preds, y_trues, outf):
         print("clas_res", classification_result)
         with open(outf, "w") as file:
             json.dump(classification_result, file, indent=4)
+        
+def get_values_for_roc_curve(y_trues, y_preds):
+        fpr, tpr, _ = roc_curve(y_trues, y_preds) 
+        return fpr, tpr, auc(fpr, tpr)

@@ -1,5 +1,5 @@
 import pandas as pd
-from padim.utils import denormalize, get_values_for_pr_curve
+from padim.utils import denormalize, get_values_for_pr_curve, get_values_for_roc_curve
 import os
 
 from matplotlib import pyplot as plt
@@ -174,3 +174,17 @@ class Visualizer():
         plt.yticks([])
         plt.xlabel(r'Anomaly Scores')
         self.writer.add_figure(tag if tag else "Histogram", fig, global_step)
+        
+    def plot_roc_curve(self, y_trues, y_preds, global_step=1, tag=None):
+        fpr, tpr, roc_auc = get_values_for_roc_curve(y_trues, y_preds)
+        fig = plt.figure(figsize=(4,4))
+        lw = 2
+        plt.plot(fpr, tpr, color='darkorange', lw=lw, label='(AUC = %0.2f)' % (roc_auc))
+        plt.plot([0, 1], [1, 0], color='navy', lw=1, linestyle=':')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver operating characteristic')
+        plt.legend(loc="lower right")
+        self.writer.add_figure(tag if tag else "ROC-Curve", fig, global_step)
