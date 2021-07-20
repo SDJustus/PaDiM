@@ -89,7 +89,8 @@ def main():
     if os.path.exists(os.path.join(cfg.params_path, cfg.name)):
         with open(os.path.join(cfg.params_path, cfg.name), "rb") as f:
             params = pickle.load(f)
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        #device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = "cpu"
         model = PaDiM.from_residuals(*params, device=device, cfg=cfg)
     else:
         model = train(cfg, train_dataloader)
