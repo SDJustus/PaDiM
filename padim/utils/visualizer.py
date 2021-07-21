@@ -15,7 +15,7 @@ class Visualizer():
     def __init__(self, cfg):        
         self.cfg = cfg
         from tensorboardX import SummaryWriter
-        self.writer = SummaryWriter(log_dir=os.path.join("../tensorboard/PaDiM/", self.cfg.name, self.cfg.backbone))
+        self.writer = SummaryWriter(log_dir=os.path.join("../tensorboard/PaDiM/", self.cfg.name, str(self.cfg.seed), self.cfg.backbone))
 
     def plot_current_errors(self, total_steps, errors):
         """Plot current errros.
