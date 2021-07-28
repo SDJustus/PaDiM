@@ -1,3 +1,4 @@
+import time
 from tqdm import tqdm
 from torchvision import transforms
 
@@ -18,9 +19,15 @@ def test(cfg, padim, dataloader):
 
     pbar = enumerate(tqdm(dataloader))
     file_names = []
+
+    inf_time = None
+    inf_times = []
+    
     for i, test_data in pbar:
+        inf_start = time.time()
         img, y_true, file_name = test_data
         res = padim.predict(img, params=(means, inv_cvars), **predict_args)
+        inf_times.append(time.time()-inf_start)
         if cfg.display:
             amap_transform = transforms.Compose([
                 transforms.Resize(size),
@@ -42,7 +49,9 @@ def test(cfg, padim, dataloader):
         y_trues.extend(y_true.numpy())
         y_preds.extend(preds)
         file_names.append(file_name)
-
+    inf_time = sum(inf_times)
+    print (f'Inference time: {inf_time} secs')
+    print (f'Inference time / individual: {inf_time/len(y_trues)} secs')
     # from 1 normal to 1 anomalous
     #y_trues = list(map(lambda x: 1.0 - x, y_trues))
     performance, thresholds, y_preds_after_threshold = get_performance(y_trues, y_preds)
