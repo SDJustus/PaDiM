@@ -41,8 +41,11 @@ def test(cfg, padim, dataloader):
             h = int(size[1]/4)
             amap = res.reshape(1, 1, w, h)
             amap = amap_transform(amap)
-            
-            padim.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap.cpu(), train_or_test="test", global_step=i)
+            save_path = None
+            if cfg.save_anomaly_map:
+                os.mkdir(os.path.join(cfg.params_path,"ano_maps"))
+                save_path = os.path.join(cfg.params_path,"ano_maps", file_name[0])
+            padim.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap.cpu(), train_or_test="test", global_step=i, save_path=save_path)
             
         preds = [res.max().item()]
 

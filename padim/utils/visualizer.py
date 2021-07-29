@@ -132,7 +132,7 @@ class Visualizer():
         """
         self.writer.add_images("images_from_{}_step".format(str(train_or_test)), images, global_step=global_step)
 
-    def plot_current_anomaly_map(self, image, amap, train_or_test="train", global_step=0):
+    def plot_current_anomaly_map(self, image, amap, train_or_test="train", global_step=0, save_path=None):
         """ Display current images.
 
         Args:
@@ -144,6 +144,9 @@ class Visualizer():
         fig, axis = plt.subplots(figsize=(4,4))
         axis.imshow(denormalize(image.squeeze().permute(1, 2, 0).numpy()))
         axis.imshow(amap.squeeze(), alpha=.7)
+        if save_path:
+            fig.savefig(save_path)
+        
         
         self.writer.add_figure("images_from_{}_step".format(str(train_or_test)), fig, global_step=global_step)
         

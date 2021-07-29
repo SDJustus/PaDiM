@@ -33,6 +33,7 @@ def parse_args():
     parser.add_argument("--inference", default=False, action="store_true", help="if inference Dataset should be used (additionally)")
     parser.add_argument("--seed", type=int, help="set seed for reproducability")
     parser.add_argument("--batchsize", type=int, default=32, help="batchsize...")
+    parser.add_argument("--save_anomaly_map", default=False, action="store_true", help="if the anomaly maps should be saved")
     return parser.parse_args()
 
 def seed(seed_value):
