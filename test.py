@@ -43,7 +43,8 @@ def test(cfg, padim, dataloader):
             amap = amap_transform(amap)
             save_path = None
             if cfg.save_anomaly_map:
-                os.mkdir(os.path.join(cfg.params_path,"ano_maps"))
+                save_dir = os.path.join(cfg.params_path,"ano_maps")
+                if not os.path.isdir(save_dir): os.mkdir(save_dir)
                 save_path = os.path.join(cfg.params_path,"ano_maps", file_name[0])
             padim.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap.cpu(), train_or_test="test", global_step=i, save_path=save_path)
             
