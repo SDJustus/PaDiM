@@ -38,7 +38,7 @@ import faiss
 
 class kCenterGreedy(SamplingMethod):
 
-  def __init__(self, X, y, seed, metric='euclidean', device ="cpu"):
+  def __init__(self, X, y, seed, device, metric='euclidean'):
     self.X = X
     self.y = y
     self.features = self.flatten_X()
@@ -67,24 +67,6 @@ class kCenterGreedy(SamplingMethod):
     if cluster_centers:
       # Update min_distances for all examples given new cluster center.
       x = self.features[cluster_centers]
-      #start_time = time.time()
-      #dist = pairwise_distances(self.features, x, metric=self.metric, n_jobs=4)
-      
-      # print("distance sklearn computation:", time.time()-start_time)
-      # print(dist)
-      # try:
-        #print(x.flags['C_CONTIGUOUS'])
-        #print(self.features.flags['C_CONTIGUOUS'])
-        #print(x.dtype)
-        #print(self.features.dtype)
-      #except:
-      #  print("didnt Work")
-      #try:
-      #  np.save("test.npy", x)
-      #  np.save("test2.npy", self.features)
-      #except:
-      #  print("didnt work either")
-      new_time = time.time()
       # REMEMBER: FAISS L2_NORM DOES NOT DO THE SQUAREROOT AT THE END -> HAS TO BE DONE MANUALLY
       if self.device == "cpu":
         dist = faiss.pairwise_distances(self.features, x)

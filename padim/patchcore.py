@@ -37,7 +37,7 @@ def distance_matrix(x, y=None, p=2):  # pairwise distance of vectors
 
     return dist
 
-def distance_with_faiss(x, coreset, k, device="cpu"):
+def distance_with_faiss(x, coreset, k, device):
     index = faiss.IndexFlatL2(coreset.shape[1])
     if device != "cpu":
         res = faiss.StandardGpuResources()
@@ -71,8 +71,9 @@ class NN():
 
 class KNN(NN):
 
-    def __init__(self, X=None, Y=None, k=3, p=2):
+    def __init__(self, device, X=None, Y=None, k=3, p=2, ):
         self.k = k
+        self.device = device
         super().__init__(X, Y, p)
 
     def train(self, X, Y):
@@ -86,7 +87,7 @@ class KNN(NN):
         #dist = distance_matrix(x, self.train_pts, self.p) ** (1 / self.p)
 
         #knn = dist.topk(self.k, largest=False)
-        knn = distance_with_faiss(x, self.train_pts, self.k)
+        knn = distance_with_faiss(x, self.train_pts, self.k, device=self.device)
         #print(knn[0])
         
 
@@ -112,16 +113,10 @@ class PatchCore(BaseModel):
         for test_data in tqdm(dataloader):
             imgs, _, _ = test_data
             self.train_one_batch(imgs)
-        print("123", self.embedding_list.dtype)
-        print("123", self.embedding_list.flags['C_CONTIGUOUS'])
         self.randomprojector = SparseRandomProjection(n_components='auto', eps=0.9)
         self.randomprojector.fit(self.embedding_list)
-        print("234", self.embedding_list.dtype)
-        print("234", self.embedding_list.flags['C_CONTIGUOUS'])
         # TODO: use faiss for all nearest neightbour and distance computations
-        selector = kCenterGreedy(self.embedding_list,0,0)
-        print("345", self.embedding_list.dtype)
-        print("345", self.embedding_list.flags['C_CONTIGUOUS'])
+        selector = kCenterGreedy(self.embedding_list,0,0, device=self.device)
         selected_idx = selector.select_batch(model=self.randomprojector, already_selected=[], N=int(self.embedding_list.shape[0]*cfg.coreset_sampling_ratio))
         # selected_idx is type list
         self.embedding_coreset = self.embedding_list[selected_idx]
@@ -151,7 +146,6 @@ class PatchCore(BaseModel):
             else:
                 # very memory consuming (np.vstack not reshaping)
                 self.embedding_list = np.vstack((self.embedding_list, reshape_embedding(embeddings.cpu().detach().numpy())))
-                print("self.embedding_list size in MB:", str(self.embedding_list.nbytes / 1024 / 1024))
             
     def test(self, cfg, dataloader):
         #cfg.name = cfg.name.split("_")[0]
@@ -255,7 +249,7 @@ class PatchCore(BaseModel):
         #print("start KNN")
         #knn = KNN(torch.from_numpy(self.embedding_coreset).to(self.device), k=self.cfg.n_neighbors)
         #score_patches = knn(torch.from_numpy(embeddings).to(self.device))[0].cpu().detach().numpy()
-        knn = KNN(self.embedding_coreset, k=self.cfg.n_neighbors)
+        knn = KNN(X=self.embedding_coreset, k=self.cfg.n_neighbors, device=self.device)
         score_patches = knn(embeddings)
         #nbrs = NearestNeighbors(n_neighbors=self.cfg.n_neighbors, algorithm='ball_tree', metric='minkowski', p=2).fit(self.embedding_coreset)
         #score_patches, _ = nbrs.kneighbors(embeddings)
