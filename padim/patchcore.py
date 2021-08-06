@@ -18,9 +18,12 @@ import faiss
 
 
 def reshape_embedding(embedding:np.ndarray):
-    _, num_embeddings, _, _= embedding.shape
-    embedding = embedding.reshape((-1, num_embeddings))
-    return embedding
+    embedding_list = []
+    for k in range(embedding.shape[0]):
+        for i in range(embedding.shape[2]):
+            for j in range(embedding.shape[3]):
+                embedding_list.append(embedding[k, :, i, j])
+    return np.array(embedding_list, dtype=np.float32)
     
 def distance_matrix(x, y=None, p=2):  # pairwise distance of vectors
 
@@ -39,9 +42,9 @@ def distance_matrix(x, y=None, p=2):  # pairwise distance of vectors
 
 def distance_with_faiss(x, coreset, k, device):
     index = faiss.IndexFlatL2(coreset.shape[1])
-    if device != "cpu":
-        res = faiss.StandardGpuResources()
-        index = faiss.index_cpu_to_gpu(res, 0, index)
+    #if device != "cpu":
+    #    res = faiss.StandardGpuResources()
+    #    index = faiss.index_cpu_to_gpu(res, 0, index)
     index.add(coreset)
     D, _ = index.search(x, k)
     return D ** (1 / 2)
@@ -118,6 +121,7 @@ class PatchCore(BaseModel):
         # TODO: use faiss for all nearest neightbour and distance computations
         selector = kCenterGreedy(self.embedding_list,0,0, device=self.device)
         selected_idx = selector.select_batch(model=self.randomprojector, already_selected=[], N=int(self.embedding_list.shape[0]*cfg.coreset_sampling_ratio))
+        print(selected_idx)
         # selected_idx is type list
         self.embedding_coreset = self.embedding_list[selected_idx]
         
@@ -141,14 +145,14 @@ class PatchCore(BaseModel):
             # b * c * w * h
             embeddings = self._embed_batch(imgs.to(self.device))
             if self.embedding_list is None:
-                self.embedding_list = np.array(reshape_embedding(embeddings.cpu().detach().numpy()))
+                self.embedding_list = reshape_embedding(embeddings.cpu().detach().numpy())
                 
             else:
                 # very memory consuming (np.vstack not reshaping)
                 self.embedding_list = np.vstack((self.embedding_list, reshape_embedding(embeddings.cpu().detach().numpy())))
             
     def test(self, cfg, dataloader):
-        #cfg.name = cfg.name.split("_")[0]
+        cfg.name = cfg.name.split("_")[0]
         PARAMS_PATH = os.path.join(cfg.params_path, cfg.name)
         size = cfg.size
 

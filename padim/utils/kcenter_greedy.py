@@ -35,6 +35,7 @@ from .sampling_def import SamplingMethod
 from tqdm import tqdm
 import time
 import faiss
+from sklearn.metrics import pairwise_distances
 
 class kCenterGreedy(SamplingMethod):
 
@@ -68,11 +69,12 @@ class kCenterGreedy(SamplingMethod):
       # Update min_distances for all examples given new cluster center.
       x = self.features[cluster_centers]
       # REMEMBER: FAISS L2_NORM DOES NOT DO THE SQUAREROOT AT THE END -> HAS TO BE DONE MANUALLY
-      if self.device == "cpu":
-        dist = faiss.pairwise_distances(self.features, x)
-      else:
-        res = faiss.StandardGpuResources()
-        dist = faiss.pairwise_distance_gpu(res, self.features, x)
+      #dist = pairwise_distances(self.features, x, metric=self.metric, n_jobs=4)
+      #if self.device == "cpu":
+      dist = faiss.pairwise_distances(self.features, x)
+      #else:
+      #  res = faiss.StandardGpuResources()
+      #  dist = faiss.pairwise_distance_gpu(res, self.features, x)
       #print("faiss",dist)
 
       if self.min_distances is None:
