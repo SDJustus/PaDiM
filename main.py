@@ -75,10 +75,6 @@ def main():
     img_transforms = transforms.Compose([
         transforms.ToTensor(),
         transforms.Resize(cfg.size),
-        transforms.Normalize(
-            mean=[0.4209137, 0.42091936, 0.42130423],
-            std=[0.34266332, 0.34264612, 0.3432589]
-        ),
     ])
     
     

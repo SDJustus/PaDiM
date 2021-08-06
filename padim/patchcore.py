@@ -18,12 +18,9 @@ import faiss
 
 
 def reshape_embedding(embedding:np.ndarray):
-    embedding_list = []
-    for k in range(embedding.shape[0]):
-        for i in range(embedding.shape[2]):
-            for j in range(embedding.shape[3]):
-                embedding_list.append(embedding[k, :, i, j])
-    return np.array(embedding_list, dtype=np.float32)
+    _, num_embeddings, _, _ = embedding.shape
+    embedding = np.ascontiguousarray(np.transpose(embedding, (0,2,3,1)).reshape((-1,num_embeddings)))
+    return embedding 
     
 def distance_matrix(x, y=None, p=2):  # pairwise distance of vectors
 
