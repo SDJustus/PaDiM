@@ -8,7 +8,7 @@ from padim.backbones import ResNet18,ResNet50, WideResNet50, EfficientNetB5
 from padim.utils.visualizer import Visualizer
 
 
-class PaDiMBase:
+class BaseModel:
     """The embedding backbone shared by PaDiM and PaDiMSVDD
     """
 
@@ -18,6 +18,7 @@ class PaDiMBase:
         self.num_embeddings = num_embeddings
         self.visualizer = Visualizer(cfg)
         self.size = cfg.size
+        self.cfg=cfg
         print(self.size)
 
         if self.size is not None:
@@ -72,6 +73,7 @@ class PaDiMBase:
         self.model.eval()
         with torch.set_grad_enabled(with_grad):
             feature_1, feature_2, feature_3 = self.model(imgs.to(self.device))
+            
         embeddings = embeddings_concat(feature_1, feature_2)
         embeddings = embeddings_concat(embeddings, feature_3)
         embeddings = torch.index_select(

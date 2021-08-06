@@ -1,13 +1,11 @@
 from .utils import (
     embeddings_concat,
     mean_smoothing,
-    compute_roc_score,
-    compute_pro_score,
     get_performance,
     denormalize,
     get_values_for_pr_curve,
     write_inference_result,
-    get_values_for_roc_curve
+    get_values_for_roc_curve,
 )
 from .regions import (
     propose_region,
@@ -18,11 +16,13 @@ from .regions import (
 )
 from .visualizer import Visualizer
 
+from .kcenter_greedy import kCenterGreedy
+
+from .sampling_def import SamplingMethod
+
 __all__ = [
     "embeddings_concat",
     "mean_smoothing",
-    "compute_roc_score",
-    "compute_pro_score",
     "propose_region",
     "propose_regions",
     "propose_regions_cv2",
@@ -33,5 +33,7 @@ __all__ = [
     "denormalize",
     "get_values_for_pr_curve",
     "write_inference_result",
-    "get_values_for_roc_curve"
+    "get_values_for_roc_curve",
+    "kCenterGreedy",
+    "SamplingMethod"
 ]

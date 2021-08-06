@@ -8,11 +8,11 @@ import torch
 from torch import Tensor, device as Device
 from torch.utils.data import DataLoader
 
-from padim.base import PaDiMBase
+from padim.base import BaseModel
 from padim.utils.distance import mahalanobis_multi, mahalanobis_sq
 
 
-class PaDiM(PaDiMBase):
+class PaDiM(BaseModel):
     """
     The PaDiM model
     """

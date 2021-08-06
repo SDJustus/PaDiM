@@ -14,15 +14,18 @@ from torchvision import transforms
 sys.path.append("./")
 
 from padim import PaDiM
+from padim import PatchCore
 
 from train import train
 from test import test
 
 
-def parse_args():
+def parse_args(): 
     parser = argparse.ArgumentParser(prog="PaDiM")
+    
     parser.add_argument("--dataroot", required=True, type=str)
     parser.add_argument("--params_path", required=True, type=str)
+    parser.add_argument("--model", default="padim", help="model to use [padim, patchcore]")
     parser.add_argument("--name", required=True, type=str, help="Name for the train run")
     parser.add_argument("--display", default=False, action="store_true")
     parser.add_argument("--num_embeddings", default=100, type=int, help="number of randomly selected embeddings (100 for r18 and 550 for WR50")
@@ -34,6 +37,9 @@ def parse_args():
     parser.add_argument("--seed", type=int, help="set seed for reproducability")
     parser.add_argument("--batchsize", type=int, default=32, help="batchsize...")
     parser.add_argument("--save_anomaly_map", default=False, action="store_true", help="if the anomaly maps should be saved")
+    #patchcore
+    parser.add_argument("--coreset_sampling_ratio", type=float, default=0.001)
+    parser.add_argument('--n_neighbors', type=int, default=3) #instead of the implementation, the most optimal neighborhood size is 3 not 9 according to the paper
     return parser.parse_args()
 
 def seed(seed_value):
@@ -85,23 +91,37 @@ def main():
     
     
     train_dataloader = DataLoader(batch_size=cfg.batchsize, dataset=training_dataset)   
-    test_dataloader = DataLoader(batch_size=1, dataset=test_dataset)   
-
-    if os.path.exists(os.path.join(cfg.params_path, cfg.name)):
-        with open(os.path.join(cfg.params_path, cfg.name), "rb") as f:
-            params = pickle.load(f)
-        #device = "cuda" if torch.cuda.is_available() else "cpu"
-        device = "cpu"
-        model = PaDiM.from_residuals(*params, device=device, cfg=cfg)
+    test_dataloader = DataLoader(batch_size=1, dataset=test_dataset)
+    if str(cfg.model).lower() == "patchcore":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = PatchCore(device=device, backbone=cfg.backbone, cfg=cfg)
+        if not os.path.exists(os.path.join(cfg.params_path, cfg.name)):
+            model.train(cfg=cfg, dataloader=train_dataloader)
+        if cfg.inference:
+            cfg.name = cfg.name + "_inference"
+            model.visualizer = Visualizer(cfg)
+            model.test(cfg=cfg, dataloader=inference_dataloader)
+        else:
+            model.test(cfg=cfg, dataloader=test_dataloader)
+        
+    elif str(cfg.model).lower() == "padim":
+        if os.path.exists(os.path.join(cfg.params_path, cfg.name)):
+            with open(os.path.join(cfg.params_path, cfg.name), "rb") as f:
+                params = pickle.load(f)
+            #device = "cuda" if torch.cuda.is_available() else "cpu"
+            device = "cpu"
+            model = PaDiM.from_residuals(*params, device=device, cfg=cfg)
+        else:
+            model = train(cfg, train_dataloader)
+        
+        if cfg.inference:
+            cfg.name = cfg.name + "_inference"
+            model.visualizer = Visualizer(cfg)
+            test(cfg, model, inference_dataloader)
+        else:
+            test(cfg, model, test_dataloader)
     else:
-        model = train(cfg, train_dataloader)
-    
-    if cfg.inference:
-        cfg.name = cfg.name + "_inference"
-        model.visualizer = Visualizer(cfg)
-        test(cfg, model, inference_dataloader)
-    else:
-        test(cfg, model, test_dataloader)
+        raise NotImplementedError("please choose a valid model ('padim', 'patchcore')")
         
 if __name__ == "__main__":
     main()
