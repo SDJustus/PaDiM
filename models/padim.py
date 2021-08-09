@@ -8,11 +8,11 @@ import torch
 from torch import Tensor, device as Device
 
 from models.base import BaseModel
-from models.utils.distance import mahalanobis_multi, mahalanobis_sq
+from utils.distance import mahalanobis_multi, mahalanobis_sq
 import os
 from tqdm import tqdm
 import time
-from models.utils import get_performance, write_inference_result
+from utils import get_performance, write_inference_result
 
 class PaDiM(BaseModel):
     """

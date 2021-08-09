@@ -3,9 +3,9 @@ from typing import Union, Tuple
 import torch
 from torch import Tensor, device as Device
 
-from models.utils import embeddings_concat
-from models.backbones import ResNet18,ResNet50, WideResNet50, EfficientNetB5
-from models.utils.visualizer import Visualizer
+from utils import embeddings_concat
+from backbones import ResNet18,ResNet50, WideResNet50, EfficientNetB5
+from utils.visualizer import Visualizer
 
 
 class BaseModel:

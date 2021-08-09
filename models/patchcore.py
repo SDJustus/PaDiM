@@ -1,7 +1,7 @@
 import pickle
 import time
 from tqdm import tqdm
-from models.utils import embeddings_concat, get_performance, write_inference_result
+from utils import embeddings_concat, get_performance, write_inference_result
 import os
 
 import numpy as np
@@ -12,7 +12,7 @@ from torch import Tensor
 import shutil
 from models.base import BaseModel
 
-from models.utils.kcenter_greedy import kCenterGreedy
+from utils.kcenter_greedy import kCenterGreedy
 from sklearn.random_projection import SparseRandomProjection
 import faiss
 import traceback
@@ -237,9 +237,12 @@ class PatchCore(BaseModel):
         self.model.eval()
         with torch.no_grad():
             #
-            _, feature_2, feature_3 = self.model(imgs.to(self.device))
+            feature_1, feature_2, feature_3 = self.model(imgs.to(self.device))
+        #feature_1 = torch.nn.AvgPool2d(3,1,1)(feature_1)   
         feature_2 = torch.nn.AvgPool2d(3,1,1)(feature_2)
         feature_3 = torch.nn.AvgPool2d(3,1,1)(feature_3)
+        #embeddings = embeddings_concat(feature_1, feature_2)
+        #embeddings = embeddings_concat(embeddings, feature_3)
         embeddings = embeddings_concat(feature_2, feature_3)
         return embeddings
     

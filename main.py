@@ -1,6 +1,6 @@
-from models.utils.visualizer import Visualizer
+from utils.visualizer import Visualizer
 from torch.utils.data.dataloader import DataLoader
-from models.datasets.dataset import ImageFolderWithPaths
+from datasets.dataset import ImageFolderWithPaths
 import argparse
 import os
 import pickle
