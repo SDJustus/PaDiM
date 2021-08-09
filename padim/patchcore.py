@@ -108,6 +108,7 @@ class PatchCore(BaseModel):
 
     def train(self, cfg, dataloader):
         PARAMS_PATH = os.path.join(cfg.params_path, cfg.name)
+        if not os.path.isdir(cfg.params_path): os.makedirs(cfg.params_path)
         train_time = None
         train_start = time.time()
         for test_data in tqdm(dataloader):
@@ -125,8 +126,13 @@ class PatchCore(BaseModel):
         print('initial embedding size : ', self.embedding_list.shape)
         print('final embedding size : ', self.embedding_coreset.shape)
         print(">> Saving params")
-        with open(PARAMS_PATH, 'wb') as f:
-            pickle.dump(self.embedding_coreset, f, protocol=4)
+        try:
+            with open(PARAMS_PATH, 'wb') as f:
+                pickle.dump(self.embedding_coreset, f, protocol=4)
+        except:
+            print("saving didnt work, saving to root directory")
+            with open("./default.pickle", 'wb') as f:
+                pickle.dump(self.embedding_coreset, f, protocol=4)
         print(f">> Params saved at {PARAMS_PATH}")
         train_time = time.time() - train_start
         print (f'Train time: {train_time} secs')
