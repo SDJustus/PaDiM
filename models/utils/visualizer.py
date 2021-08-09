@@ -1,5 +1,5 @@
 import pandas as pd
-from padim.utils import denormalize, get_values_for_pr_curve, get_values_for_roc_curve
+from models.utils import denormalize, get_values_for_pr_curve, get_values_for_roc_curve
 import os
 
 from matplotlib import pyplot as plt

@@ -1,7 +1,7 @@
 import pickle
 import time
 from tqdm import tqdm
-from padim.utils import embeddings_concat, get_performance, write_inference_result
+from models.utils import embeddings_concat, get_performance, write_inference_result
 import os
 
 import numpy as np
@@ -10,9 +10,9 @@ from torchvision import transforms
 import torch
 from torch import Tensor
 import shutil
-from padim.base import BaseModel
+from models.base import BaseModel
 
-from padim.utils.kcenter_greedy import kCenterGreedy
+from models.utils.kcenter_greedy import kCenterGreedy
 from sklearn.random_projection import SparseRandomProjection
 import faiss
 
@@ -155,7 +155,8 @@ class PatchCore(BaseModel):
                 self.embedding_list = np.vstack((self.embedding_list, reshape_embedding(embeddings.cpu().detach().numpy())))
             
     def test(self, cfg, dataloader):
-        cfg.name = cfg.name.split("_")[0]
+        if cfg.inference:
+            cfg.name = cfg.name.split("_")[0]
         PARAMS_PATH = os.path.join(cfg.params_path, cfg.name)
         size = cfg.size
 

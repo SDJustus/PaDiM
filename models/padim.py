@@ -1,16 +1,18 @@
-from typing import Tuple, Union, List
+import pickle
+from typing import Tuple, Union
 
-import numpy as np
 from numpy import ndarray as NDArray
 from torchvision import transforms
 
 import torch
 from torch import Tensor, device as Device
-from torch.utils.data import DataLoader
 
-from padim.base import BaseModel
-from padim.utils.distance import mahalanobis_multi, mahalanobis_sq
-
+from models.base import BaseModel
+from models.utils.distance import mahalanobis_multi, mahalanobis_sq
+import os
+from tqdm import tqdm
+import time
+from models.utils import get_performance, write_inference_result
 
 class PaDiM(BaseModel):
     """
@@ -24,12 +26,38 @@ class PaDiM(BaseModel):
         backbone: str = "resnet18",
         cfg: dict = None
     ):
-        super(PaDiM, self).__init__(num_embeddings, device, backbone, cfg)
+        super(PaDiM, self).__init__(cfg.num_embeddings, device, cfg.backbone, cfg)
         self.N = 0
         self.means = torch.zeros(
             (self.num_patches, self.num_embeddings)).to(self.device)
         self.covs = torch.zeros((self.num_patches, self.num_embeddings,
                                  self.num_embeddings)).to(self.device)
+    
+    def train(self, cfg, dataloader):
+        PARAMS_PATH = os.path.join(cfg.params_path, cfg.name)
+        if not os.path.isdir(cfg.params_path): os.makedirs(cfg.params_path)
+        train_time = None
+        train_start = time.time()
+
+        for batch in tqdm(dataloader):
+            if isinstance(batch, tuple) or isinstance(batch, list):
+                imgs = batch[0]
+            self.train_one_batch(imgs)
+        
+        print(">> Saving params")
+        params = self.get_residuals()
+        try:
+            with open(PARAMS_PATH, 'wb') as f:
+                pickle.dump(params, f, protocol=4)
+        except:
+            print("saving didnt work, saving to root directory")
+            with open("./default.pickle", 'wb') as f:
+                pickle.dump(params, f, protocol=4)
+        print(f">> Params saved at {PARAMS_PATH}")
+        train_time = time.time() - train_start
+        print (f'Train time: {train_time} secs')
+
+
 
     def train_one_batch(self, imgs: Tensor) -> None:
         """
@@ -85,6 +113,76 @@ class PaDiM(BaseModel):
         inv_cvars = torch.inverse(covs)
         inv_cvars.to(self.device)
         return inv_cvars
+
+    def test(self, cfg, dataloader):
+        size = cfg.size
+
+        predict_args = {}
+        y_trues = []
+        y_preds = []
+
+        means, covs, emb_id = self.get_params()
+        del emb_id
+        inv_cvars = self._get_inv_cvars(covs)
+
+        pbar = enumerate(tqdm(dataloader))
+        file_names = []
+
+        inf_time = None
+        inf_times = []
+        
+        for i, test_data in pbar:
+            inf_start = time.time()
+            img, y_true, file_name = test_data
+            res = self.predict(img, params=(means, inv_cvars), **predict_args)
+            inf_times.append(time.time()-inf_start)
+            if cfg.display:
+                amap_transform = transforms.Compose([
+                    transforms.Resize(size),
+                    transforms.GaussianBlur(5)
+                ])
+                #if "efficient" in cfg.backbone:
+                #    w = int(size[0]/2)
+                #    h = int(size[1]/2)
+                #else:
+                w = int(size[0]/4)
+                h = int(size[1]/4)
+                amap = res.reshape(1, 1, w, h)
+                amap = amap_transform(amap)
+                save_path = None
+                if cfg.save_anomaly_map:
+                    save_dir = os.path.join(cfg.params_path,"ano_maps")
+                    if not os.path.isdir(save_dir): os.mkdir(save_dir)
+                    save_path = os.path.join(cfg.params_path,"ano_maps", file_name[0])
+                self.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap.cpu(), train_or_test="test", global_step=i, save_path=save_path)
+                
+            preds = [res.max().item()]
+
+            y_trues.extend(y_true.numpy())
+            y_preds.extend(preds)
+            file_names.append(file_name)
+        inf_time = sum(inf_times)
+        print (f'Inference time: {inf_time} secs')
+        print (f'Inference time / individual: {inf_time/len(y_trues)} secs')
+        # from 1 normal to 1 anomalous
+        #y_trues = list(map(lambda x: 1.0 - x, y_trues))
+        performance, thresholds, y_preds_after_threshold = get_performance(y_trues, y_preds)
+        with open(os.path.join(cfg.params_path, str(cfg.name) + str(cfg.inference)+".txt"), "w") as f:
+            f.write(str(performance))
+            f.close()
+        self.visualizer.plot_histogram(y_trues=y_trues, y_preds=y_preds, threshold=performance["threshold"], global_step=1, save_path=os.path.join(cfg.params_path, str(cfg.name) + str(cfg.inference)+".csv"), tag="Histogram_"+str(cfg.name))
+        self.visualizer.plot_pr_curve(y_trues=y_trues, y_preds=y_preds, thresholds=thresholds)
+        self.visualizer.plot_performance(1, performance=performance)
+        self.visualizer.plot_current_conf_matrix(1, performance["conf_matrix"])
+        self.visualizer.plot_roc_curve(y_trues=y_trues, y_preds=y_preds, global_step=1, tag="ROC_Curve")
+        
+        if cfg.inference:
+            write_inference_result(file_names=file_names, y_preds=y_preds_after_threshold, y_trues=y_trues, outf=os.path.join(cfg.params_path, "classification_result_" + str(cfg.name) + ".json"))
+        
+        
+
+        return performance
+
 
     def predict(self,
                 new_imgs: Tensor,

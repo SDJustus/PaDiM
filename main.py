@@ -1,6 +1,6 @@
-from padim.utils.visualizer import Visualizer
+from models.utils.visualizer import Visualizer
 from torch.utils.data.dataloader import DataLoader
-from padim.datasets.dataset import ImageFolderWithPaths
+from models.datasets.dataset import ImageFolderWithPaths
 import argparse
 import os
 import pickle
@@ -13,11 +13,7 @@ from torchvision import transforms
 
 sys.path.append("./")
 
-from padim import PaDiM
-from padim import PatchCore
-
-from train import train
-from test import test
+from models import PaDiM, PatchCore
 
 
 def parse_args(): 
@@ -88,17 +84,12 @@ def main():
     
     train_dataloader = DataLoader(batch_size=cfg.batchsize, dataset=training_dataset)   
     test_dataloader = DataLoader(batch_size=1, dataset=test_dataset)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     if str(cfg.model).lower() == "patchcore":
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        
         model = PatchCore(device=device, backbone=cfg.backbone, cfg=cfg)
         if not os.path.exists(os.path.join(cfg.params_path, cfg.name)):
             model.train(cfg=cfg, dataloader=train_dataloader)
-        if cfg.inference:
-            cfg.name = cfg.name + "_inference"
-            model.visualizer = Visualizer(cfg)
-            model.test(cfg=cfg, dataloader=inference_dataloader)
-        else:
-            model.test(cfg=cfg, dataloader=test_dataloader)
         
     elif str(cfg.model).lower() == "padim":
         if os.path.exists(os.path.join(cfg.params_path, cfg.name)):
@@ -108,16 +99,18 @@ def main():
             device = "cpu"
             model = PaDiM.from_residuals(*params, device=device, cfg=cfg)
         else:
-            model = train(cfg, train_dataloader)
+            model = PaDiM(device = device, cfg = cfg)
+            model.train(cfg, train_dataloader)
         
-        if cfg.inference:
-            cfg.name = cfg.name + "_inference"
-            model.visualizer = Visualizer(cfg)
-            test(cfg, model, inference_dataloader)
-        else:
-            test(cfg, model, test_dataloader)
+    
     else:
         raise NotImplementedError("please choose a valid model ('padim', 'patchcore')")
+    if cfg.inference:
+        cfg.name = cfg.name + "_inference"
+        model.visualizer = Visualizer(cfg)
+        model.test(cfg=cfg, dataloader=inference_dataloader)
+    else:
+        model.test(cfg=cfg, dataloader=test_dataloader)
         
 if __name__ == "__main__":
     main()
