@@ -29,13 +29,15 @@ outlier datapoints.  Resulting centers are solution to multiple integer program.
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import traceback
 
 import numpy as np
 from .sampling_def import SamplingMethod
 from tqdm import tqdm
 import time
 import faiss
-from sklearn.metrics import pairwise_distances
+import traceback
+
 
 class kCenterGreedy(SamplingMethod):
 
@@ -106,6 +108,8 @@ class kCenterGreedy(SamplingMethod):
       print('Calculating distances...')
       self.update_distances(already_selected, only_new=False, reset_dist=True)
     except:
+      print(self.X.shape)
+      traceback.print_exc()
       print('Using flat_X as features.')
       self.update_distances(already_selected, only_new=True, reset_dist=False)
 

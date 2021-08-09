@@ -140,9 +140,9 @@ class Visualizer():
             train_or_test (["train", "test]): Determines, which phase the model is in
             images ([FloatTensor]): [Real Image, Anomaly Map, Mask (Optional)]
         """
-        print(global_step)
+        
         fig, axis = plt.subplots(figsize=(4,4))
-        axis.imshow(denormalize(image.squeeze().permute(1, 2, 0).numpy()))
+        axis.imshow(image.squeeze().permute(1, 2, 0).numpy())
         axis.imshow(amap.squeeze(), alpha=.7)
         if save_path:
             fig.savefig(save_path)

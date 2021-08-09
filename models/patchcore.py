@@ -15,6 +15,7 @@ from models.base import BaseModel
 from models.utils.kcenter_greedy import kCenterGreedy
 from sklearn.random_projection import SparseRandomProjection
 import faiss
+import traceback
 
 
 def reshape_embedding(embedding:np.ndarray):
@@ -22,20 +23,7 @@ def reshape_embedding(embedding:np.ndarray):
     embedding = np.ascontiguousarray(np.transpose(embedding, (0,2,3,1)).reshape((-1,num_embeddings)))
     return embedding 
     
-def distance_matrix(x, y=None, p=2):  # pairwise distance of vectors
 
-    y = x if type(y) == type(None) else y
-
-    n = x.size(0)
-    m = y.size(0)
-    d = x.size(1)
-
-    x = x.unsqueeze(1).expand(n, m, d)
-    y = y.unsqueeze(0).expand(n, m, d)
-
-    dist = torch.pow(x - y, p).sum(2)
-
-    return dist
 
 def distance_with_faiss(x, coreset, k, device):
     index = faiss.IndexFlatL2(coreset.shape[1])
@@ -60,15 +48,6 @@ class NN():
     def __call__(self, x):
         return self.predict(x)
 
-    def predict(self, x):
-        if type(self.train_pts) == type(None) or type(self.train_label) == type(None):
-            name = self.__class__.__name__
-            raise RuntimeError(f"{name} wasn't trained. Need to execute {name}.train() first")
-
-        dist = distance_matrix(x, self.train_pts, self.p) ** (1 / self.p)
-        labels = torch.argmin(dist, dim=1)
-        return self.train_label[labels]
-
 class KNN(NN):
 
     def __init__(self, device, X=None, Y=None, k=3, p=2, ):
@@ -83,17 +62,12 @@ class KNN(NN):
 
     def predict(self, x):
 
-
-        #dist = distance_matrix(x, self.train_pts, self.p) ** (1 / self.p)
-
-        #knn = dist.topk(self.k, largest=False)
         knn = distance_with_faiss(x, self.train_pts, self.k, device=self.device)
-        #print(knn[0])
-        
-
         return knn
 
-
+def min_max_norm(image):
+    a_min, a_max = image.min(), image.max()
+    return (image-a_min)/(a_max - a_min)    
 
 class PatchCore(BaseModel):
     """
@@ -114,8 +88,14 @@ class PatchCore(BaseModel):
         for test_data in tqdm(dataloader):
             imgs, _, _ = test_data
             self.train_one_batch(imgs)
-        self.randomprojector = SparseRandomProjection(n_components='auto', eps=0.9)
-        self.randomprojector.fit(self.embedding_list)
+        try:
+            self.randomprojector = SparseRandomProjection(n_components='auto', eps=0.9)
+            self.randomprojector.fit(self.embedding_list)
+        except ValueError:
+            traceback.print_exc()
+            self.randomprojector = SparseRandomProjection(n_components=self.embedding_list.shape[1])
+            self.randomprojector.fit(self.embedding_list)
+            print("skipping Dimensionality Reduction because dimensionality is already only {}".format(str(self.embedding_list.shape[1])))
         # TODO: use faiss for all nearest neightbour and distance computations
         selector = kCenterGreedy(self.embedding_list,0,0, device=self.device)
         selected_idx = selector.select_batch(model=self.randomprojector, already_selected=[], N=int(self.embedding_list.shape[0]*cfg.coreset_sampling_ratio))
@@ -186,9 +166,12 @@ class PatchCore(BaseModel):
                 #    w = int(size[0]/2)
                 #    h = int(size[1]/2)
                 #else:
-                w = int(size[0]/8)
-                h = int(size[1]/8)
+                divisor = 16 if str(cfg.backbone).endswith("b5") else 8
+                w = int(size[0]/divisor)
+                h = int(size[1]/divisor)
                 amap = res[:, 0].reshape(1, 1, w, h)
+                print(amap)
+                amap = min_max_norm(amap)
                 amap = amap_transform(amap)
                 save_path = None
                 if cfg.save_anomaly_map:
@@ -226,9 +209,7 @@ class PatchCore(BaseModel):
         
         if cfg.inference:
             write_inference_result(file_names=file_names, y_preds=y_preds_after_threshold, y_trues=y_trues, outf=os.path.join(cfg.params_path, "classification_result_" + str(cfg.name) + ".json"))
-        
-        
-
+            
         return performance
 
     def predict(self,
@@ -244,26 +225,10 @@ class PatchCore(BaseModel):
         =======
             distances: Tensor - (c * b) array of distances
         """
-        #print("start prediction")
-        #print("start embedding")
         embeddings = self._embed_batch(new_imgs)
         embeddings = reshape_embedding(embeddings.cpu().detach().numpy())
-        #print("finished embedding")
-        #b, c, w, h = embeddings.shape
-        # not required, but need changing of testing code
-        #assert b == 1, f"The batch should be of size 1, got b={b}"
-        #embeddings = embeddings.reshape(c, w * h).permute(1, 0)
-        # TODO: use faiss for all nearest neightbour and distance computations
-        #print("start KNN")
-        #knn = KNN(torch.from_numpy(self.embedding_coreset).to(self.device), k=self.cfg.n_neighbors)
-        #score_patches = knn(torch.from_numpy(embeddings).to(self.device))[0].cpu().detach().numpy()
         knn = KNN(X=self.embedding_coreset, k=self.cfg.n_neighbors, device=self.device)
         score_patches = knn(embeddings)
-        #nbrs = NearestNeighbors(n_neighbors=self.cfg.n_neighbors, algorithm='ball_tree', metric='minkowski', p=2).fit(self.embedding_coreset)
-        #score_patches, _ = nbrs.kneighbors(embeddings)
-        #print("score_pathes", score_patches)
-        #print("end KNN")
-        #anomaly_map = score_patches[:,0].reshape((28,28))
         score_patches = torch.from_numpy(score_patches)
         return score_patches
  
