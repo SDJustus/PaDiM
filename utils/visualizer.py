@@ -4,6 +4,7 @@ import os
 
 from matplotlib import pyplot as plt
 import seaborn as sns
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 class Visualizer():
@@ -143,7 +144,10 @@ class Visualizer():
         
         fig, axis = plt.subplots(figsize=(4,4))
         axis.imshow(image.squeeze().permute(1, 2, 0).numpy())
-        axis.imshow(amap.squeeze(), alpha=.7)
+        #divider = make_axes_locatable(axis)
+        #cax = divider.append_axes('right', size='5%', pad=0.1)
+        im = axis.imshow(amap.squeeze(), alpha=.7, cmap='viridis')
+        #fig.colorbar(im, cax=cax, orientation='vertical')
         if save_path:
             fig.savefig(save_path)
         

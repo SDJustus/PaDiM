@@ -27,9 +27,9 @@ def reshape_embedding(embedding:np.ndarray):
 
 def distance_with_faiss(x, coreset, k, device):
     index = faiss.IndexFlatL2(coreset.shape[1])
-    #if device != "cpu":
-    #    res = faiss.StandardGpuResources()
-    #    index = faiss.index_cpu_to_gpu(res, 0, index)
+    if device != "cpu":
+        res = faiss.StandardGpuResources()
+        index = faiss.index_cpu_to_gpu(res, 0, index)
     index.add(coreset)
     D, _ = index.search(x, k)
     return D ** (1 / 2)
@@ -170,19 +170,19 @@ class PatchCore(BaseModel):
                 w = int(size[0]/divisor)
                 h = int(size[1]/divisor)
                 amap = res[:, 0].reshape(1, 1, w, h)
-                print(amap)
-                amap = min_max_norm(amap)
+                
                 amap = amap_transform(amap)
+                amap = min_max_norm(amap)
                 save_path = None
                 if cfg.save_anomaly_map:
                     save_dir = os.path.join(cfg.params_path,"ano_maps")
                     if not os.path.isdir(save_dir): os.mkdir(save_dir)
-                    save_path = os.path.join(cfg.params_path,"ano_maps", file_name[0])
+                    save_path = os.path.join(save_dir, file_name[0])
                 self.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap.cpu(), train_or_test="test", global_step=i, save_path=save_path)
             #res = res.numpy()
             N_b = res[torch.argmax(res[:,0])]
             w = (1 - (torch.max(torch.exp(N_b))/torch.sum(torch.exp(N_b))))
-            preds = w*max(res[:,0])
+            preds = w*max(res[:,0])     #
             if np.isnan(preds):
                 print(preds)
                 print(res)
@@ -227,9 +227,13 @@ class PatchCore(BaseModel):
         """
         embeddings = self._embed_batch(new_imgs)
         embeddings = reshape_embedding(embeddings.cpu().detach().numpy())
+        #print(self.embedding_coreset.shape)
+        #print(embeddings.shape)
         knn = KNN(X=self.embedding_coreset, k=self.cfg.n_neighbors, device=self.device)
         score_patches = knn(embeddings)
+        #print(score_patches.shape)
         score_patches = torch.from_numpy(score_patches)
+        # score_patches == kNN distances -> shape = (num_patches, k)
         return score_patches
  
     
@@ -240,7 +244,9 @@ class PatchCore(BaseModel):
             feature_1, feature_2, feature_3 = self.model(imgs.to(self.device))
         #feature_1 = torch.nn.AvgPool2d(3,1,1)(feature_1)   
         feature_2 = torch.nn.AvgPool2d(3,1,1)(feature_2)
+        #print("f2:", feature_2.shape)
         feature_3 = torch.nn.AvgPool2d(3,1,1)(feature_3)
+        #print("f3:", feature_3.shape)
         #embeddings = embeddings_concat(feature_1, feature_2)
         #embeddings = embeddings_concat(embeddings, feature_3)
         embeddings = embeddings_concat(feature_2, feature_3)

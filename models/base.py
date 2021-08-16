@@ -76,11 +76,13 @@ class BaseModel:
             
         embeddings = embeddings_concat(feature_1, feature_2)
         embeddings = embeddings_concat(embeddings, feature_3)
+        #print("b4",embeddings.shape)
         embeddings = torch.index_select(
             embeddings,
             dim=1,
             index=self.embedding_ids,
         )
+        #print("after", embeddings.shape)
         return embeddings
 
     def _embed_batch_flatten(self, imgs, *args):

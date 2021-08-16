@@ -71,10 +71,12 @@ class PaDiM(BaseModel):
             embeddings = self._embed_batch(imgs.to(self.device))
             b = embeddings.size(0)
             embeddings = embeddings.reshape(
-                (-1, self.num_embeddings, self.num_patches))  # b * c * (w * h)
+                (-1, self.num_embeddings, self.num_patches))  # b * c * (w * h) 
+            #embeddings.shape[0] == b
             for i in range(self.num_patches):
                 patch_embeddings = embeddings[:, :, i]  # b * c
                 for j in range(b):
+                    # cov computation for each embedding at batch j
                     self.covs[i, :, :] += torch.outer(
                         patch_embeddings[j, :],
                         patch_embeddings[j, :])  # c * c
@@ -104,14 +106,15 @@ class PaDiM(BaseModel):
             covs[i, :, :] -= self.N * torch.outer(means[i, :], means[i, :])
             covs[i, :, :] /= self.N - 1  # corrected covariance
             covs[i, :, :] += epsilon * identity  # constant term
-
+        print("means.shape",means.shape)
+        print("covs.shape",covs.shape)
         return means, covs, self.embedding_ids
 
 
     def _get_inv_cvars(self, covs: Tensor) -> NDArray:
         covs.to("cpu")
         inv_cvars = torch.inverse(covs)
-        inv_cvars.to(self.device)
+        inv_cvars = inv_cvars.to(self.device)
         return inv_cvars
 
     def test(self, cfg, dataloader):
@@ -200,6 +203,7 @@ class PaDiM(BaseModel):
         """
         if params is None:
             means, covs, _ = self.get_params()
+            #print(covs.shape)
             inv_cvars = self._get_inv_cvars(covs)
         else:
             means, inv_cvars = params
@@ -209,6 +213,10 @@ class PaDiM(BaseModel):
         # not required, but need changing of testing code
         assert b == 1, f"The batch should be of size 1, got b={b}"
         embeddings = embeddings.reshape(c, w * h).permute(1, 0)
+        #print(embeddings.shape)
+        #print(means.shape)
+        #print(inv_cvars.shape)
+        
 
         if compare_all:
             distances = mahalanobis_multi(embeddings, means, inv_cvars)

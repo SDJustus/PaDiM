@@ -28,17 +28,25 @@ def embeddings_concat(x0: Tensor, x1: Tensor) -> Tensor:
     _, c1, h1, w1 = x1.size()
     s = h0 // h1
     #print("shape before unfold", str(x0.shape))
+    #print(x0)
     x0 = F.unfold(x0, kernel_size=(s, s), dilation=(1, 1), stride=(s, s))
+    #print(x0)
+    #print("------")
     #print("shape after unfold", str(x0.shape))
     x0 = x0.view(b0, c0, -1, h1, w1)
+    #print(x0)
     #print("shape after unfold_view", str(x0.shape))
+    #print(x1)
     z = torch.zeros(b0, c0 + c1, x0.size(2), h1, w1).to(x0.device)
     for i in range(x0.size(2)):
         z[:, :, i, :, :] = torch.cat((x0[:, :, i, :, :], x1), 1)
+    #print(z)
     #print("shape before view", str(z.shape))
     z = z.view(b0, -1, h1 * w1)
     #print("shape after view", str(z.shape))
+    #print(z)
     z = F.fold(z, kernel_size=(s, s), output_size=(h0, w0), stride=(s, s))
+    #print(z)
     #print("shape after fold", str(z.shape))
     return z
 

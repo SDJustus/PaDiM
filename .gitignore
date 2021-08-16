@@ -142,3 +142,4 @@ dmypy.json
 .prof
 
 results/
+test*/

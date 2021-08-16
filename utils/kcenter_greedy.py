@@ -69,11 +69,14 @@ class kCenterGreedy(SamplingMethod):
                          if d not in self.already_selected]
     if cluster_centers:
       # Update min_distances for all examples given new cluster center.
-      x = self.features[cluster_centers]
+      #print("cluster_centers:", cluster_centers)
+      x = self.features[cluster_centers] # shape: (1,357)
+      #print("x:", x.shape)
       # REMEMBER: FAISS L2_NORM DOES NOT DO THE SQUAREROOT AT THE END -> HAS TO BE DONE MANUALLY
       #dist = pairwise_distances(self.features, x, metric=self.metric, n_jobs=4)
       #if self.device == "cpu":
-      dist = faiss.pairwise_distances(self.features, x)
+      dist = faiss.pairwise_distances(self.features, x) #shape: (n_train_imgs*32*32, 1)
+      #print("d",dist.shape)
       #else:
       #  res = faiss.StandardGpuResources()
       #  dist = faiss.pairwise_distance_gpu(res, self.features, x)
@@ -83,7 +86,9 @@ class kCenterGreedy(SamplingMethod):
         self.min_distances = np.min(dist, axis=1).reshape(-1,1)
         
       else:
-        self.min_distances = np.minimum(self.min_distances, dist)
+        #print("1",self.min_distances.shape)
+        self.min_distances = np.minimum(self.min_distances, dist) # shape: (n_train_imgs*32*32, 1)
+        #print("2",self.min_distances.shape)
 
   def select_batch_(self, model, already_selected, N, **kwargs):
     """
@@ -104,7 +109,9 @@ class kCenterGreedy(SamplingMethod):
       # Assumes that the transform function takes in original data and not
       # flattened data.
       print('Getting transformed features...')
-      self.features = np.ascontiguousarray(model.transform(self.X), dtype=np.float32)
+      #print(self.X.shape) #shape(n_train_imgs*32*32, 1536)
+      self.features = np.ascontiguousarray(model.transform(self.X), dtype=np.float32) #shape(n_train_imgs*32*32, 357)
+      #print(self.features.shape)
       print('Calculating distances...')
       self.update_distances(already_selected, only_new=False, reset_dist=True)
     except:
@@ -124,7 +131,7 @@ class kCenterGreedy(SamplingMethod):
       # New examples should not be in already selected since those points
       # should have min_distance of zero to a cluster center.
       assert ind not in already_selected
-
+      #print("ind:", ind)
       self.update_distances([ind], only_new=True, reset_dist=False)
       new_batch.append(ind)
     print('Maximum distance from cluster centers is %0.2f'
