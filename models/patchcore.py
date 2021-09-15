@@ -79,6 +79,8 @@ class PatchCore(BaseModel):
         self.N = 0
         self.embedding_list = None
         self.embedding_coreset = None
+        self.all_amaps = []
+        self.file_names = []
 
     def train(self, cfg, dataloader):
         PARAMS_PATH = os.path.join(cfg.params_path, cfg.name)
@@ -147,51 +149,63 @@ class PatchCore(BaseModel):
             self.embedding_coreset = pickle.load(open(PARAMS_PATH, 'rb'))
 
         pbar = enumerate(tqdm(dataloader))
-        file_names = []
 
         inf_time = None
         inf_times = []
-        
+        divisor = 16 if str(self.cfg.backbone).endswith("b5") else 8
+        amap_w = int(self.cfg.size[0]/divisor)
+        amap_h = int(self.cfg.size[1]/divisor)
         for i, test_data in pbar:
             inf_start = time.time()
             img, y_true, file_name = test_data
             res = self.predict(img, **predict_args)
             inf_times.append(time.time()-inf_start)
-            if cfg.display:
-                amap_transform = transforms.Compose([
-                    transforms.Resize(size),
-                    transforms.GaussianBlur(5)
-                ])
-                #if "efficient" in cfg.backbone:
-                #    w = int(size[0]/2)
-                #    h = int(size[1]/2)
-                #else:
-                divisor = 16 if str(cfg.backbone).endswith("b5") else 8
-                w = int(size[0]/divisor)
-                h = int(size[1]/divisor)
-                amap = res[:, 0].reshape(1, 1, w, h)
+            
+            
                 
-                amap = amap_transform(amap)
-                amap = min_max_norm(amap)
-                save_path = None
-                if cfg.save_anomaly_map:
-                    save_dir = os.path.join(cfg.params_path,"ano_maps")
+                
+                
+                #amap = amap_transform(amap)
+                #amap = min_max_norm(amap)
+                #save_path = None
+                #if cfg.save_anomaly_map:
+                #    save_dir = os.path.join(cfg.params_path,"ano_maps")
+                #    if not os.path.isdir(save_dir): os.mkdir(save_dir)
+                #    save_path = os.path.join(save_dir, file_name[0])
+                #self.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap.cpu(), train_or_test="test", global_step=i, save_path=save_path)
+            #res = res.numpy()
+            N_b = res[np.argmax(res[:,0])]
+            w = (1 - (np.max(np.exp(N_b))/np.sum(np.exp(N_b))))
+            amap = w*res[:,0]
+            
+            pred = max(amap)
+            if cfg.save_anomaly_map or cfg.display:
+                amap = amap.reshape(1,1,amap_w, amap_h)
+                amap_transform = transforms.Compose([
+                transforms.Resize(self.cfg.size),
+                transforms.GaussianBlur(5)
+                ])
+                amap = torch.from_numpy(amap)
+                amap_resized_blur = amap_transform(amap)
+                save_path=None
+                if self.cfg.save_anomaly_map:
+                    save_dir = os.path.join(self.cfg.params_path,"ano_maps")
                     if not os.path.isdir(save_dir): os.mkdir(save_dir)
                     save_path = os.path.join(save_dir, file_name[0])
-                self.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap.cpu(), train_or_test="test", global_step=i, save_path=save_path)
-            #res = res.numpy()
-            N_b = res[torch.argmax(res[:,0])]
-            w = (1 - (torch.max(torch.exp(N_b))/torch.sum(torch.exp(N_b))))
-            preds = w*max(res[:,0])     #
-            if np.isnan(preds):
-                print(preds)
+                # the maximum anomaly score over inference data set... need to be adjusted -> just vor visualization purpose
+                self.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap_resized_blur.cpu(), train_or_test="test", global_step=i, save_path=save_path, maximum_as=self.cfg.max_as_score)
+                
+                
+            if np.isnan(pred):
+                print(pred)
                 print(res)
                 print(N_b)
                 print(w)
                 print("DDDDDDDDDDDDDDDDDDDDDDDAAAAAAAAAAAAAAAAAAAAAAAANNNNNNNNNNNNNNNNNNNNNNNNNGGGGGGGGGGGGGGGGGGGGEEEEEEEEEEEEEEEEEEERRRRRRRRRRRRRRRRR!")
             y_trues.extend(y_true.numpy())
-            y_preds.append(preds.numpy().item())
-            file_names.append(file_name)
+            y_preds.append(pred)
+            self.file_names.append(file_name)
+        
         inf_time = sum(inf_times)
         print (f'Inference time: {inf_time} secs')
         print (f'Inference time / individual: {inf_time/len(y_trues)} secs')
@@ -208,7 +222,7 @@ class PatchCore(BaseModel):
         self.visualizer.plot_roc_curve(y_trues=y_trues, y_preds=y_preds, global_step=1, tag="ROC_Curve")
         
         if cfg.inference:
-            write_inference_result(file_names=file_names, y_preds=y_preds_after_threshold, y_trues=y_trues, outf=os.path.join(cfg.params_path, "classification_result_" + str(cfg.name) + ".json"))
+            write_inference_result(file_names=self.file_names, y_preds=y_preds_after_threshold, y_trues=y_trues, outf=os.path.join(cfg.params_path, "classification_result_" + str(cfg.name) + ".json"))
             
         return performance
 
@@ -231,8 +245,8 @@ class PatchCore(BaseModel):
         #print(embeddings.shape)
         knn = KNN(X=self.embedding_coreset, k=self.cfg.n_neighbors, device=self.device)
         score_patches = knn(embeddings)
+        #score_patches = torch.from_numpy(score_patches)
         #print(score_patches.shape)
-        score_patches = torch.from_numpy(score_patches)
         # score_patches == kNN distances -> shape = (num_patches, k)
         return score_patches
  
@@ -251,5 +265,6 @@ class PatchCore(BaseModel):
         #embeddings = embeddings_concat(embeddings, feature_3)
         embeddings = embeddings_concat(feature_2, feature_3)
         return embeddings
+    
     
     

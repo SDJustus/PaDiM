@@ -157,7 +157,7 @@ class PaDiM(BaseModel):
                     save_dir = os.path.join(cfg.params_path,"ano_maps")
                     if not os.path.isdir(save_dir): os.mkdir(save_dir)
                     save_path = os.path.join(cfg.params_path,"ano_maps", file_name[0])
-                self.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap.cpu(), train_or_test="test", global_step=i, save_path=save_path)
+                self.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap.cpu(), train_or_test="test", global_step=i, save_path=save_path, maximum_as=self.cfg.max_as_score)
                 
             preds = [res.max().item()]
 

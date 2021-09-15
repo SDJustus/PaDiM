@@ -133,7 +133,7 @@ class Visualizer():
         """
         self.writer.add_images("images_from_{}_step".format(str(train_or_test)), images, global_step=global_step)
 
-    def plot_current_anomaly_map(self, image, amap, train_or_test="train", global_step=0, save_path=None):
+    def plot_current_anomaly_map(self, image, amap, train_or_test="train", global_step=0, save_path=None, maximum_as=None):
         """ Display current images.
 
         Args:
@@ -146,7 +146,7 @@ class Visualizer():
         axis.imshow(image.squeeze().permute(1, 2, 0).numpy())
         #divider = make_axes_locatable(axis)
         #cax = divider.append_axes('right', size='5%', pad=0.1)
-        im = axis.imshow(amap.squeeze(), alpha=.7, cmap='viridis')
+        im = axis.imshow(amap.squeeze(), alpha=.7, cmap='viridis', vmin=0 if maximum_as else None, vmax=maximum_as)
         #fig.colorbar(im, cax=cax, orientation='vertical')
         if save_path:
             fig.savefig(save_path)
