@@ -144,10 +144,10 @@ class Visualizer():
         
         fig, axis = plt.subplots(figsize=(4,4))
         axis.imshow(image.squeeze().permute(1, 2, 0).numpy())
-        #divider = make_axes_locatable(axis)
-        #cax = divider.append_axes('right', size='5%', pad=0.1)
-        im = axis.imshow(amap.squeeze(), alpha=.7, cmap='viridis', vmin=0 if maximum_as else None, vmax=maximum_as)
-        #fig.colorbar(im, cax=cax, orientation='vertical')
+        divider = make_axes_locatable(axis)
+        cax = divider.append_axes('right', size='5%', pad=0.1)
+        amap_on_image = axis.imshow(amap.squeeze(), alpha=.7, cmap='viridis', vmin=0 if maximum_as else None, vmax=maximum_as)
+        fig.colorbar(amap_on_image, cax=cax, orientation='vertical')
         if save_path:
             fig.savefig(save_path)
         
