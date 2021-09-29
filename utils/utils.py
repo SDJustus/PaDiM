@@ -70,8 +70,6 @@ def get_performance(y_trues, y_preds, manual_threshold):
     mov_thresh = np.random.default_rng().uniform(min_thresh, max_thresh, 200)
     print(mov_thresh.shape)
     for th in sorted(mov_thresh, reverse=True):
-    #for th in t:
-        print(th)
         y_preds_new = [1 if ele >= th else 0 for ele in y_preds] 
         if len(set(y_preds_new)) == 1:
             print("y_preds_new did only contain the element {}... Continuing with next iteration!".format(y_preds_new[0]))
@@ -79,7 +77,7 @@ def get_performance(y_trues, y_preds, manual_threshold):
         
         precision, recall, _, _ = precision_recall_fscore_support(y_trues, y_preds_new, average="binary", pos_label=1)
         temp_dict[str(precision)] = recall
-        print("writing", temp_dict)
+        print("writing")
     p_dict = OrderedDict(sorted(temp_dict.items(), reverse=False))
     # interploation
     print("interpolation steps", len(list(p_dict.keys())))
@@ -87,9 +85,7 @@ def get_performance(y_trues, y_preds, manual_threshold):
         print(i)
         try:
             if p_dict[list(p_dict.keys())[i-1]]>p_dict[list(p_dict.keys())[i-2]]:
-                print(p_dict)
                 p_dict[list(p_dict.keys())[i-2]] = p_dict[list(p_dict.keys())[i-1]]
-                print("after", p_dict)
         except IndexError:
             print("finished interpolation")
     p_dict = OrderedDict(sorted(p_dict.items(), reverse=True))
