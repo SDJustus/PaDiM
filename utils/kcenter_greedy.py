@@ -41,7 +41,7 @@ import traceback
 
 class kCenterGreedy(SamplingMethod):
 
-  def __init__(self, X, y, seed, device, metric='euclidean'):
+  def __init__(self, X, y, device, metric='euclidean'):
     self.X = X
     self.y = y
     self.features = self.flatten_X()

@@ -91,7 +91,7 @@ class PatchCore(BaseModel):
             imgs, _, _ = test_data
             self.train_one_batch(imgs)
         try:
-            self.randomprojector = SparseRandomProjection(n_components='auto', eps=0.9)
+            self.randomprojector = SparseRandomProjection(n_components='auto', eps=0.9, random_state=cfg.seed)
             self.randomprojector.fit(self.embedding_list)
         except ValueError:
             traceback.print_exc()
@@ -99,7 +99,7 @@ class PatchCore(BaseModel):
             self.randomprojector.fit(self.embedding_list)
             print("skipping Dimensionality Reduction because dimensionality is already only {}".format(str(self.embedding_list.shape[1])))
         # TODO: use faiss for all nearest neightbour and distance computations
-        selector = kCenterGreedy(self.embedding_list,0,0, device=self.device)
+        selector = kCenterGreedy(self.embedding_list,0, device=self.device)
         selected_idx = selector.select_batch(model=self.randomprojector, already_selected=[], N=int(self.embedding_list.shape[0]*cfg.coreset_sampling_ratio))
         print(selected_idx)
         # selected_idx is type list
@@ -191,9 +191,14 @@ class PatchCore(BaseModel):
                 if self.cfg.save_anomaly_map:
                     save_dir = os.path.join(self.cfg.params_path,"ano_maps")
                     if not os.path.isdir(save_dir): os.mkdir(save_dir)
-                    save_path = os.path.join(save_dir, file_name[0])
+                    save_path = os.path.join(save_dir, str(pred)+ "__" + file_name[0])
                 # the maximum anomaly score over inference data set... need to be adjusted -> just vor visualization purpose
-                self.visualizer.plot_current_anomaly_map(image=img.cpu(), amap=amap_resized_blur.cpu(), train_or_test="test", global_step=i, save_path=save_path, maximum_as=self.cfg.max_as_score)
+                self.visualizer.plot_current_anomaly_map(image=img.cpu(), 
+                                                         amap=amap_resized_blur.cpu(), 
+                                                         train_or_test="test", 
+                                                         global_step=i, 
+                                                         save_path=save_path, 
+                                                         maximum_as=self.cfg.max_as_score)
                 
                 
             if np.isnan(pred):
@@ -211,7 +216,7 @@ class PatchCore(BaseModel):
         print (f'Inference time / individual: {inf_time/len(y_trues)} secs')
         # from 1 normal to 1 anomalous
         #y_trues = list(map(lambda x: 1.0 - x, y_trues))
-        performance, thresholds, y_preds_after_threshold = get_performance(y_trues, y_preds)
+        performance, thresholds, y_preds_after_threshold = get_performance(y_trues, y_preds, manual_threshold=cfg.decision_threshold)
         with open(os.path.join(cfg.params_path, str(cfg.name) + str(cfg.inference)+".txt"), "w") as f:
             f.write(str(performance))
             f.close()

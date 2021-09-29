@@ -169,7 +169,7 @@ class PaDiM(BaseModel):
         print (f'Inference time / individual: {inf_time/len(y_trues)} secs')
         # from 1 normal to 1 anomalous
         #y_trues = list(map(lambda x: 1.0 - x, y_trues))
-        performance, thresholds, y_preds_after_threshold = get_performance(y_trues, y_preds)
+        performance, thresholds, y_preds_after_threshold = get_performance(y_trues, y_preds, manual_threshold=cfg.decision_threshold)
         with open(os.path.join(cfg.params_path, str(cfg.name) + str(cfg.inference)+".txt"), "w") as f:
             f.write(str(performance))
             f.close()

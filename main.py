@@ -37,6 +37,7 @@ def parse_args():
     parser.add_argument("--coreset_sampling_ratio", type=float, default=0.001)
     parser.add_argument('--n_neighbors', type=int, default=3) #instead of the implementation, the most optimal neighborhood size is 3 not 9 according to the paper
     parser.add_argument("--max_as_score", type=float, default=None, help="the maximal Anomaly Score you are expecting. This is only for anomaly map visualization")
+    parser.add_argument("--decision_threshold", type=float, default=None, help="set the decision threshold for the anomaly score manually. If not set, it is computed by AUROC-Metric")
     return parser.parse_args()
 
 def seed(seed_value):

@@ -36,7 +36,7 @@ class Visualizer():
             performance (OrderedDict): Performance for the current epoch.
         """
         
-        self.writer.add_scalars("Performance Metrics", {k:v for k,v in performance.items() if (k != "conf_matrix" and k != "Avg Run Time (ms/batch)")}, global_step=epoch)
+        self.writer.add_scalars("Performance Metrics", {k:v for k,v in performance.items() if ("conf_matrix" not in k and k != "Avg Run Time (ms/batch)")}, global_step=epoch)
              
     def plot_current_conf_matrix(self, epoch, cm):
         
