@@ -228,7 +228,7 @@ class PatchCore(BaseModel):
         if cfg.decision_threshold:
             self.visualizer.plot_current_conf_matrix(2, performance["conf_matrix_man"], save_path=os.path.join(cfg.params_path, "conf_matrix_man" + str(cfg.inference) + ".png"))
             self.visualizer.plot_histogram(y_trues=y_trues, y_preds=y_preds, threshold=performance["manual_threshold"], global_step=2, save_path=os.path.join(cfg.params_path, "hist_man_" + str(cfg.inference)+".png"), tag="Histogram_"+str(cfg.name))
-        self.visualizer.plot_roc_curve(y_trues=y_trues, y_preds=y_preds, global_step=1, tag="ROC_Curve")
+        self.visualizer.plot_roc_curve(y_trues=y_trues, y_preds=y_preds, global_step=1, tag="ROC_Curve", save_path=os.path.join(cfg.params_path, "roc_" + str(cfg.inference)+".png"))
         
         if cfg.inference:
             write_inference_result(file_names=self.file_names, y_preds=y_preds_after_threshold, y_trues=y_trues, outf=os.path.join(cfg.params_path, "classification_result_" + str(cfg.name) + ".json"))
