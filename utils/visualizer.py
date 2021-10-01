@@ -38,14 +38,13 @@ class Visualizer():
         
         self.writer.add_scalars("Performance Metrics", {k:v for k,v in performance.items() if ("conf_matrix" not in k and k != "Avg Run Time (ms/batch)")}, global_step=epoch)
              
-    def plot_current_conf_matrix(self, epoch, cm):
+    def plot_current_conf_matrix(self, epoch, cm, save_path):
         
         def _plot_confusion_matrix(cm,
                           target_names=["Normal", "Abnormal"],
-                          title='Confusion matrix',
                           cmap=None,
                           normalize=True,
-                          savefig = True):
+                          save_path = None):
             """
             given a sklearn confusion matrix (cm), make a nice plot
 
@@ -116,11 +115,11 @@ class Visualizer():
             plt.ylabel('True label')
             plt.xlabel('Predicted label')
             plt.tight_layout()
-            if savefig:
-                plt.savefig(title+".png")
+            if save_path:
+                plt.savefig(save_path)
             plt.close()
             return figure
-        plot = _plot_confusion_matrix(cm, normalize=False, savefig=False)
+        plot = _plot_confusion_matrix(cm, normalize=False, save_path=save_path)
         self.writer.add_figure("Confusion Matrix", plot, global_step=epoch)
         
     def plot_current_images(self, images, train_or_test="train", global_step=0):
@@ -164,7 +163,6 @@ class Visualizer():
         scores["scores"] = y_preds
         scores["labels"] = y_trues
         hist = pd.DataFrame.from_dict(scores)
-        hist.to_csv(save_path if save_path else "histogram.csv")
         
         plt.ion()
 
@@ -180,6 +178,7 @@ class Visualizer():
         plt.legend()
         plt.yticks([])
         plt.xlabel(r'Anomaly Scores')
+        plt.savefig(save_path)
         self.writer.add_figure(tag if tag else "Histogram", fig, global_step)
         
     def plot_roc_curve(self, y_trues, y_preds, global_step=1, tag=None):

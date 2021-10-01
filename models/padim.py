@@ -173,14 +173,14 @@ class PaDiM(BaseModel):
         with open(os.path.join(cfg.params_path, str(cfg.name) + str(cfg.inference)+".txt"), "w") as f:
             f.write(str(performance))
             f.close()
-        self.visualizer.plot_histogram(y_trues=y_trues, y_preds=y_preds, threshold=performance["threshold"], global_step=1, save_path=os.path.join(cfg.params_path, str(cfg.name) + str(cfg.inference)+".csv"), tag="Histogram_"+str(cfg.name))
+        self.visualizer.plot_histogram(y_trues=y_trues, y_preds=y_preds, threshold=performance["threshold"], global_step=1, save_path=os.path.join(cfg.params_path, "hist_" + str(cfg.inference)+".png"), tag="Histogram_"+str(cfg.name))
         
         self.visualizer.plot_pr_curve(y_trues=y_trues, y_preds=y_preds, thresholds=thresholds)
         self.visualizer.plot_performance(1, performance=performance)
-        self.visualizer.plot_current_conf_matrix(1, performance["conf_matrix"])
+        self.visualizer.plot_current_conf_matrix(1, performance["conf_matrix"], save_path=os.path.join(cfg.params_path, "conf_matrix" + str(cfg.inference) + ".png"))
         if cfg.decision_threshold:
-            self.visualizer.plot_current_conf_matrix(2, performance["conf_matrix_man"])
-            self.visualizer.plot_histogram(y_trues=y_trues, y_preds=y_preds, threshold=performance["manual_threshold"], global_step=2, save_path=os.path.join(cfg.params_path, str(cfg.name) + str(cfg.inference)+".csv"), tag="Histogram_"+str(cfg.name))
+            self.visualizer.plot_current_conf_matrix(2, performance["conf_matrix_man"], save_path=os.path.join(cfg.params_path, "conf_matrix_man" + str(cfg.inference) + ".png"))
+            self.visualizer.plot_histogram(y_trues=y_trues, y_preds=y_preds, threshold=performance["manual_threshold"], global_step=2, save_path=os.path.join(cfg.params_path, "hist_man_" + str(cfg.inference)+".png"), tag="Histogram_"+str(cfg.name))
         self.visualizer.plot_roc_curve(y_trues=y_trues, y_preds=y_preds, global_step=1, tag="ROC_Curve")
         
         if cfg.inference:
