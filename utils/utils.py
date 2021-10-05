@@ -67,7 +67,7 @@ def get_performance(y_trues, y_preds, manual_threshold):
     min_thresh = 0.9*min(y_preds)
     max_thresh = 1.1*max(y_preds)
     print(max_thresh)
-    mov_thresh = np.random.default_rng().uniform(min_thresh, max_thresh, 200)
+    mov_thresh = np.random.default_rng().uniform(min_thresh, max_thresh, 400)
     print(mov_thresh.shape)
     for th in sorted(mov_thresh, reverse=True):
         y_preds_new = [1 if ele >= th else 0 for ele in y_preds] 
@@ -91,13 +91,14 @@ def get_performance(y_trues, y_preds, manual_threshold):
     p_dict = OrderedDict(sorted(p_dict.items(), reverse=True))
     for p in precisions:   
         for precision, recall in p_dict.items(): 
-            if float(precision)<=p:
-                print(f"writing {p}; {precision}")
+            recall_dict["recall at pr="+str(p)] = 0.0
+            recall_dict["true pr="+str(p)] = 0.0
+            while float(precision)>p:
                 recall_dict["recall at pr="+str(p)] = recall
                 recall_dict["true pr="+str(p)] = float(precision)
-                break
-            else:
                 continue
+            else:
+                break
 
     
     # auroc Threshold
