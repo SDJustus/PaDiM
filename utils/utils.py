@@ -136,7 +136,7 @@ def get_performance(y_trues, y_preds, manual_threshold):
         performance.update(man_dict)
     performance.update(recall_dict)
                                 
-    return performance, t, y_preds_man_thresh if manual_threshold else y_preds_auc_thresh
+    return performance, t, y_preds_man_thresh if manual_threshold else None, y_preds_auc_thresh
 
 def get_values_for_pr_curve(y_trues, y_preds, thresholds):
     precisions = []

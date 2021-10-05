@@ -169,7 +169,7 @@ class PaDiM(BaseModel):
         print (f'Inference time / individual: {inf_time/len(y_trues)} secs')
         # from 1 normal to 1 anomalous
         #y_trues = list(map(lambda x: 1.0 - x, y_trues))
-        performance, thresholds, y_preds_after_threshold = get_performance(y_trues, y_preds, manual_threshold=cfg.decision_threshold)
+        performance, thresholds, y_preds_man, y_preds_auc = get_performance(y_trues, y_preds, manual_threshold=cfg.decision_threshold)
         with open(os.path.join(cfg.params_path, str(cfg.name) + str(cfg.inference)+".txt"), "w") as f:
             f.write(str(performance))
             f.close()
@@ -184,8 +184,10 @@ class PaDiM(BaseModel):
         self.visualizer.plot_roc_curve(y_trues=y_trues, y_preds=y_preds, global_step=1, tag="ROC_Curve", save_path=os.path.join(cfg.params_path, "roc_" + str(cfg.inference)+".png"))
         
         if cfg.inference:
-            write_inference_result(file_names=file_names, y_preds=y_preds_after_threshold, y_trues=y_trues, outf=os.path.join(cfg.params_path, "classification_result_" + str(cfg.name) + ".json"))
-        
+            write_inference_result(file_names=self.file_names, y_preds=y_preds_auc, y_trues=y_trues, outf=os.path.join(cfg.params_path, "classification_result_" + str(cfg.name) + ".json"))
+            if cfg.decision_threshold:
+                write_inference_result(file_names=self.file_names, y_preds=y_preds_man, y_trues=y_trues, outf=os.path.join(cfg.params_path, "classification_result_" + str(cfg.name) + "_man.json"))
+            
         
 
         return performance
