@@ -163,7 +163,7 @@ class PaDiM(BaseModel):
 
             y_trues.extend(y_true.numpy())
             y_preds.extend(preds)
-            file_names.append(file_name)
+            self.file_names.append(file_name)
         inf_time = sum(inf_times)
         print (f'Inference time: {inf_time} secs')
         print (f'Inference time / individual: {inf_time/len(y_trues)} secs')
