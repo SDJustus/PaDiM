@@ -81,12 +81,10 @@ def get_performance(y_trues, y_preds, manual_threshold):
     p_dict = OrderedDict(sorted(temp_dict.items(), reverse=False))
     # interploation
     print("interpolation steps", len(list(p_dict.keys())))
-    for i in range(len(list(p_dict.keys())), 0, -1):
-        try:
-            if p_dict[list(p_dict.keys())[i-1]]>p_dict[list(p_dict.keys())[i-2]]:
-                p_dict[list(p_dict.keys())[i-2]] = p_dict[list(p_dict.keys())[i-1]]
-        except IndexError:
-            print("finished interpolation")
+    for i in range(len(list(p_dict.keys())), 1, -1):
+        if p_dict[list(p_dict.keys())[i-1]]>p_dict[list(p_dict.keys())[i-2]]:
+            p_dict[list(p_dict.keys())[i-2]] = p_dict[list(p_dict.keys())[i-1]]
+    print("finished interpolation")
     p_dict = OrderedDict(sorted(p_dict.items(), reverse=True))
     for p in precisions:   
         recall_dict["recall at pr="+str(p)] = 0.0

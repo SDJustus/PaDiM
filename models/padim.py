@@ -32,7 +32,8 @@ class PaDiM(BaseModel):
             (self.num_patches, self.num_embeddings)).to(self.device)
         self.covs = torch.zeros((self.num_patches, self.num_embeddings,
                                  self.num_embeddings)).to(self.device)
-    
+        self.file_names = []
+        
     def train(self, cfg, dataloader):
         PARAMS_PATH = os.path.join(cfg.params_path, cfg.name)
         if not os.path.isdir(cfg.params_path): os.makedirs(cfg.params_path)
