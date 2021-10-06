@@ -93,7 +93,7 @@ def get_performance(y_trues, y_preds, manual_threshold):
         for precision, recall in p_dict.items(): 
             recall_dict["recall at pr="+str(p)] = 0.0
             recall_dict["true pr="+str(p)] = 0.0
-            while float(precision)>0.997*p:
+            while float(precision)>0.998*p:
                 recall_dict["recall at pr="+str(p)] = recall
                 recall_dict["true pr="+str(p)] = float(precision)
                 continue
